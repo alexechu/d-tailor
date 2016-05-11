@@ -26,19 +26,19 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
             return 0
         
         #Populate solution with desired features
-        solution.mutable_region=range(0,len(solution.sequence)) # whole region
+        solution.mutable_region=list(range(0,len(solution.sequence))) # whole region
         solution.cds_region = (49,len(solution.sequence))
         solution.keep_aa = True
         
-        cai_obj = CAI.CAI(solution=solution,label="cds",args= {  'cai_range' : (49,len(solution.sequence)), 'mutable_region' : range(49,len(solution.sequence)) } )
+        cai_obj = CAI.CAI(solution=solution,label="cds",args= {  'cai_range' : (49,len(solution.sequence)), 'mutable_region' : list(range(49,len(solution.sequence))) } )
             
         #Look for RBS
-        dup_obj1 = RNADuplex.RNADuplexRibosome(solution1=solution, label="sd16s", args = { 'rnaMolecule1region' : (25,48), 'mutable_region' : range(25,48) })
+        dup_obj1 = RNADuplex.RNADuplexRibosome(solution1=solution, label="sd16s", args = { 'rnaMolecule1region' : (25,48), 'mutable_region' : list(range(25,48)) })
         dup_mfe = RNADuplex.RNADuplexMFE(dup_obj1)
         dup_obj1.add_subfeature(dup_mfe)
         
         #MFE [-30,30]
-        st1_obj = Structure(solution=solution,label="utr",args= { 'structure_range' : (49-30,49+30), 'mutable_region' : range(49-30,49+30) } )
+        st1_obj = Structure(solution=solution,label="utr",args= { 'structure_range' : (49-30,49+30), 'mutable_region' : list(range(49-30,49+30)) } )
         st_mfe = StructureMFE(st1_obj)
         st1_obj.add_subfeature(st_mfe)
         
@@ -50,7 +50,7 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
         '''
         Solution validation tests
         '''
-        if solution.sequence == None or ('?' in solution.levels.values()):
+        if solution.sequence == None or ('?' in list(solution.levels.values())):
             sys.stderr.write("SolutionValidator: Level unknown - "+str(solution.levels)+"\n")                        
             solution.valid = False
             return 0
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     
     for seed in [seed1]:#,seed2,seed3,seed4,seed5,seed6,seed7,seed8,seed9,seed10,seed11,seed12,seed13,seed14,seed15,seed16,seed17,seed18,seed19,seed20,seed21,seed22,seed23,seed24,seed25,seed26,seed27,seed28,seed29,seed30]:
     
-        print "seed=",i        
+        print("seed=",i)        
             
         design = FullFactorial(["sd16sRNADuplexMFE","utrStructureMFE","cdsCAI"],design_param)
         #design = RandomSampling(["sd16sRNADuplexMFE","utrStructureMFE","cdsCAI"],design_param, 3000)

@@ -6,7 +6,7 @@ Created on Nov 1, 2011
 
 import sys
 from random import choice
-from Functions import randomMutationOperator
+from .Functions import randomMutationOperator
 from uuid import uuid4
 
 class Solution:
@@ -41,14 +41,14 @@ class Solution:
                 
     def add_feature(self,feature):
         featureLabel=feature.label+feature.__class__.__name__
-        if not self.features.has_key(featureLabel):
+        if featureLabel not in self.features:
             self.features[featureLabel] = feature
             #update scores
             self.scores.update(feature.scores)
             #update levels             
             if feature.level != None:
                 self.levels[featureLabel+"Level"] = feature.level
-            for subfeature in feature.subfeatures.values():
+            for subfeature in list(feature.subfeatures.values()):
                 self.add_feature(subfeature)
         else:
             sys.stderr.write("Feature label already exists!")
@@ -61,7 +61,7 @@ class Solution:
             return False
         
         same = True
-        for feature in self.designMethod.features.keys():
+        for feature in list(self.designMethod.features.keys()):
             key = feature+"Level"            
             same = same & (desiredSolution[key]==0 or desiredSolution[key]==self.levels[key]) 
             
@@ -74,7 +74,7 @@ class Solution:
         else:        
             # get features with targets
             mutable = []
-            for feature in self.features.values():
+            for feature in list(self.features.values()):
                 if feature.defineTarget(desiredSolution):
                     mutable.append(feature)
         

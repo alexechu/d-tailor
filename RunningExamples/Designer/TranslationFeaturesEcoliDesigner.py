@@ -27,19 +27,19 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
             return 0
         
         #Populate solution with desired features
-        solution.mutable_region=range(0,len(solution.sequence)) # whole region
+        solution.mutable_region=list(range(0,len(solution.sequence))) # whole region
         solution.cds_region = (49,len(solution.sequence))
         solution.keep_aa = True
         
-        cai_obj = CAI.CAI(solution=solution,label="cds",args= {  'cai_range' : (49,len(solution.sequence)), 'mutable_region' : range(49,len(solution.sequence)) } )
+        cai_obj = CAI.CAI(solution=solution,label="cds",args= {  'cai_range' : (49,len(solution.sequence)), 'mutable_region' : list(range(49,len(solution.sequence))) } )
             
         #Look for RBS
-        dup_obj1 = RNADuplex.RNADuplexRibosome(solution1=solution, label="sd16s", args = { 'rnaMolecule1region' : (25,48), 'mutable_region' : range(25,48) })
+        dup_obj1 = RNADuplex.RNADuplexRibosome(solution1=solution, label="sd16s", args = { 'rnaMolecule1region' : (25,48), 'mutable_region' : list(range(25,48)) })
         dup_mfe = RNADuplex.RNADuplexMFE(dup_obj1)
         dup_obj1.add_subfeature(dup_mfe)
         
         #MFE [-30,30]
-        st1_obj = Structure(solution=solution,label="utr",args= { 'structure_range' : (49-30,49+30), 'mutable_region' : range(49-30,49+30) } )
+        st1_obj = Structure(solution=solution,label="utr",args= { 'structure_range' : (49-30,49+30), 'mutable_region' : list(range(49-30,49+30)) } )
         st_mfe = StructureMFE(st1_obj)
         st1_obj.add_subfeature(st_mfe)
         
@@ -51,7 +51,7 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
         '''
         Solution validation tests
         '''
-        if solution.sequence == None or ('?' in solution.levels.values()):
+        if solution.sequence == None or ('?' in list(solution.levels.values())):
             sys.stderr.write("SolutionValidator: Level unknown - "+str(solution.levels)+"\n")                        
             solution.valid = False
             return 0
@@ -136,10 +136,10 @@ if __name__ == '__main__':
         elif sys.argv[1] == "randomsampling":
             design = RandomSampling(["sd16sRNADuplexMFE","utrStructureMFE","cdsCAI"],design_param, int(sys.argv[2]))
         elif sys.argv[1] == "-h":
-            print "Please use one of the following options: "
-            print "TranslationFeaturesEcoliDesigner.py optimization [target]"
-            print "TranslationFeaturesEcoliDesigner.py fullfactorial"
-            print "TranslationFeaturesEcoliDesigner.py randomsampling [sample size]"
+            print("Please use one of the following options: ")
+            print("TranslationFeaturesEcoliDesigner.py optimization [target]")
+            print("TranslationFeaturesEcoliDesigner.py fullfactorial")
+            print("TranslationFeaturesEcoliDesigner.py randomsampling [sample size]")
             sys.exit("")
         else:
             sys.exit("For help use TranslationFeaturesEcoliDesigner.py -h\n")

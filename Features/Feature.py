@@ -49,7 +49,7 @@ class Feature(object):
             targets.append(self)
                     
         #evaluate if goal has achieved for children classes
-        for subfeature in self.subfeatures.values():
+        for subfeature in list(self.subfeatures.values()):
             targets.extend(subfeature.getTargets(desiredSolution))
                 
         return targets
@@ -62,7 +62,7 @@ class Feature(object):
             return True
         
         #check if there is a target
-        if not desiredSolution.has_key(self.label+self.__class__.__name__+"Level"):
+        if self.label+self.__class__.__name__+"Level" not in desiredSolution:
             return False
         else:
             target_level = desiredSolution[self.label+self.__class__.__name__+"Level"]
@@ -93,9 +93,9 @@ class Feature(object):
         '''
         
         if self.solution.designMethod != None: #Design mode
-            if self.solution.designMethod.thresholds.has_key(self.label+self.__class__.__name__):
+            if self.label+self.__class__.__name__ in self.solution.designMethod.thresholds:
                 
-                for level_name in self.solution.designMethod.thresholds[self.label+self.__class__.__name__].keys():
+                for level_name in list(self.solution.designMethod.thresholds[self.label+self.__class__.__name__].keys()):
                     
                     level_info = self.solution.designMethod.thresholds[self.label+self.__class__.__name__][level_name]                    
                     

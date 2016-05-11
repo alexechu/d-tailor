@@ -28,9 +28,9 @@ class Bottleneck(Feature):
             #Specifics of this Feature
             self.bottleneck_range = args['bottleneck_range']
             self.sequence         = solution.sequence[self.bottleneck_range[0]:self.bottleneck_range[1]+1]        
-            self.mutable_region   = args['mutable_region'] if args.has_key('mutable_region') else solution.mutable_region
-            self.cds_region       = args['cds_region']    if args.has_key('cds_region') else solution.cds_region
-            self.keep_aa          = args['keep_aa']        if args.has_key('keep_aa') else solution.keep_aa             
+            self.mutable_region   = args['mutable_region'] if 'mutable_region' in args else solution.mutable_region
+            self.cds_region       = args['cds_region']    if 'cds_region' in args else solution.cds_region
+            self.keep_aa          = args['keep_aa']        if 'keep_aa' in args else solution.keep_aa             
             self.set_scores()
             self.set_level() 
             self.calculate_mutable_segments()      
@@ -59,7 +59,7 @@ class Bottleneck(Feature):
         if self.mutable_region == None:
             return 
         
-        for level in self.solution.designMethod.thresholds[self.label+"BottleneckPosition"].keys():
+        for level in list(self.solution.designMethod.thresholds[self.label+"BottleneckPosition"].keys()):
             segment = self.solution.designMethod.thresholds[self.label+"BottleneckPosition"][level]
             real_start = self.bottleneck_range[0] + (segment[0]-1)*3
             real_stop  = self.bottleneck_range[0] + (segment[1]-1)*3
@@ -118,7 +118,7 @@ class BottleneckPosition(Bottleneck):
         target_level = desiredSolution[self.label+'BottleneckPositionLevel']
         if target_level != self.level: #check if there is a level to achieve 
             
-            levelsToMutate = [level for level in self.segmentMutation.keys() if self.segmentMutation[level] != []]           
+            levelsToMutate = [level for level in list(self.segmentMutation.keys()) if self.segmentMutation[level] != []]           
             rndLevel = choice(levelsToMutate)
   
             if rndLevel == target_level:
@@ -158,7 +158,7 @@ class BottleneckRelativeStrength(Bottleneck):
         target_level_for_position = desiredSolution[self.label+'BottleneckPositionLevel']
         if  target_level_for_strength != self.level and bneck_position_level == target_level_for_position:
             
-            other_segments = [segment for segment in self.segmentMutation.keys() if self.segmentMutation[segment] != [] and segment != target_level_for_position]           
+            other_segments = [segment for segment in list(self.segmentMutation.keys()) if self.segmentMutation[segment] != [] and segment != target_level_for_position]           
             
             if  target_level_for_strength-self.level > 0:
                 

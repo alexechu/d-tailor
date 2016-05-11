@@ -9,7 +9,7 @@ import os
 import sys
 
 def DB2CSV(db_file):
-    print "Generating CSV files for " , db_file , "...",
+    print("Generating CSV files for " , db_file , "...", end=' ')
 
     #### Create connection to DB
     con = sqlite3.connect(db_file)
@@ -52,7 +52,7 @@ def DB2CSV(db_file):
     
     con.close()
     
-    print "Done!"
+    print("Done!")
     
     
 if __name__ == '__main__':

@@ -46,6 +46,6 @@ def pfm2pwm(pfmFile=""):
 if __name__ == "__main__":
     pwm_sd = pfm2pwm("../testFiles/pwm/e.coli/sd/ecoli_sd.pwm")
     
-    print pwm_sd
+    print(pwm_sd)
     
     

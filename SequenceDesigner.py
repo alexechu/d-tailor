@@ -4,11 +4,11 @@ Created on Nov 1, 2012
 @author: jcg
 '''
 
-from DBOperation.DBSQLite import DBSQLite
-from Solution import Solution
+from .DBOperation.DBSQLite import DBSQLite
+from .Solution import Solution
 from time import time
 from random import choice
-from Functions import hammingDistance
+from .Functions import hammingDistance
 import sys
 
 class SequenceDesigner(object):
@@ -112,7 +112,7 @@ class SequenceDesigner(object):
             iteration = 0                        
             
             if time()-last_timepoint >= 60: #Print statistics every 1 minute
-                print "time elapsed: %.2f (s) \t solutions generated: %d \t rate (last min.): %0.2f sol/s  \t rate (overall): %0.2f sol/s" % ((time() - start_time),sol_counter,(sol_counter-last_counter)/(time()-last_timepoint),sol_counter/(time() - start_time))
+                print("time elapsed: %.2f (s) \t solutions generated: %d \t rate (last min.): %0.2f sol/s  \t rate (overall): %0.2f sol/s" % ((time() - start_time),sol_counter,(sol_counter-last_counter)/(time()-last_timepoint),sol_counter/(time() - start_time)))
                 last_counter = sol_counter
                 last_timepoint = time()     
                     
@@ -125,7 +125,7 @@ class SequenceDesigner(object):
                     all_combinations_found = True
                     break
             else:
-                print "looking for combination: " , desired_solution['des_solution_id']                                                                
+                print("looking for combination: " , desired_solution['des_solution_id'])                                                                
                 desired_solution_id = desired_solution['des_solution_id']            
             
             """
@@ -143,7 +143,7 @@ class SequenceDesigner(object):
                 #print "SolutionIterator: Found close sequence, starting from here..."
                 #parent = Solution(sol_id=closestSolution['generated_solution_id'],sequence=closestSolution['sequence'])
                 
-                if self.solutionsHash.has_key(closestSolution['generated_solution_id']):
+                if closestSolution['generated_solution_id'] in self.solutionsHash:
                     parent = self.solutionsHash[closestSolution['generated_solution_id']]
                 else:
                     parent = Solution(sol_id=closestSolution['generated_solution_id'],sequence=closestSolution['sequence'],design=self.designMethod)
@@ -226,19 +226,19 @@ class SequenceDesigner(object):
                     #Stops when number generated solutions is equal to the desired sample size
                     if sol_counter >= self.designMethod.nDesigns:
                         all_combinations_found = True
-                        print "RandomSampling: %s solutions generated." % (sol_counter)    
+                        print("RandomSampling: %s solutions generated." % (sol_counter))    
                 
             #insert solution in the DB
             if solution != None and solution.checkSolution(desired_solution) and solution != parent and solution.valid:
-                print "Solution found... inserting into DB..."
+                print("Solution found... inserting into DB...")
                 self.dbconnection.DBInsertSolution(solution, desired_solution_id)
                 self.solutionsHash[solution.solid] = solution
                 sol_counter += 1
             elif found == True:
-                print "Solution already found by other worker" 
+                print("Solution already found by other worker") 
             else:
                 if self.designMethod.listDesigns != [] and not all_combinations_found:
-                    print "No solution could be found..."
+                    print("No solution could be found...")
                     #print "Iteration: ", iteration, " Valid: ", solution.valid
                     self.dbconnection.DBChangeStatusDesiredSolution(desired_solution_id,'WAITING')
 
@@ -246,16 +246,16 @@ class SequenceDesigner(object):
         self.dbconnection.DBCloseConnection()
         
         if len(self.designMethod.listDesigns)==1:
-            print "\n###########################"
-            print "# Optimized solution:"
-            print "# ID: ", solution.solid
-            print "# Sequence: ", solution.sequence
-            print "# Scores: ", [ feat+": "+str(solution.scores[feat]) for feat in self.designMethod.featuresList] 
-            print "# Levels: ", [ feat+"Level: "+str(solution.levels[feat+"Level"]) for feat in self.designMethod.featuresList]
-            print "# Number of generated solutions: ", sol_counter
-            print "# Distance to seed: ", hammingDistance(master.sequence, solution.sequence)
-            print "###########################\n"
+            print("\n###########################")
+            print("# Optimized solution:")
+            print("# ID: ", solution.solid)
+            print("# Sequence: ", solution.sequence)
+            print("# Scores: ", [ feat+": "+str(solution.scores[feat]) for feat in self.designMethod.featuresList]) 
+            print("# Levels: ", [ feat+"Level: "+str(solution.levels[feat+"Level"]) for feat in self.designMethod.featuresList])
+            print("# Number of generated solutions: ", sol_counter)
+            print("# Distance to seed: ", hammingDistance(master.sequence, solution.sequence))
+            print("###########################\n")
         
         return(sol_counter,hammingDistance(master.sequence, solution.sequence))
         
-        print "Program finished..."    
+        print("Program finished...")    

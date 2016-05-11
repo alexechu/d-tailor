@@ -11,7 +11,7 @@ def random_base(at):
 
 def random_fasta(fasta, length, at):
     fasta = open(fasta, 'w')
-    print >> fasta, ">random uniform length=", length
+    print(">random uniform length=", length, file=fasta)
 
     for i in range(1,length+1):
         fasta.write(random_base(at))
@@ -26,7 +26,7 @@ def random_genes(cfile, length):
         i += random.randint(5, 500)
         j = i + random.randint(200, 2000)
         if(j < length):
-            print >> coords, "UNK", i, j, "random"
+            print("UNK", i, j, "random", file=coords)
         i = j
     coords.close()
 

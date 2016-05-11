@@ -4,7 +4,7 @@ Created on Oct 3, 2011
 @author: jcg
 '''
 
-from Data import *
+from .Data import *
 from math import log, exp, sqrt
 from random import randint, choice
 import string
@@ -52,7 +52,7 @@ def translateCDS(sequence):
 
 # return the indices of the array 'array' sorted
 def argsort(array, reverse=False):
-    return sorted(range(len(array)), key=array.__getitem__, reverse=reverse)
+    return sorted(list(range(len(array))), key=array.__getitem__, reverse=reverse)
 
 #return sequence complementary to seq
 def complementary(seq):
@@ -82,7 +82,7 @@ def lin(x, y):
             R^2 Value, sum of squares and mean error 
     """
     if len(x) != len(y):
-        raise ValueError, 'unequal length'
+        raise ValueError('unequal length')
     n = len(x)
     sx = sy = sxx = syy = sxy = 0.0
     for i, j in zip(x, y):
@@ -104,7 +104,7 @@ def lin(x, y):
     return a, b, r2, ssq, mean_error
 
 def appendLabelToDict(somedict,label):
-    return dict(map(lambda (key, value): (label+str(key), value), somedict.items()))
+    return dict([(label+str(key_value[0]), key_value[1]) for key_value in list(somedict.items())])
 
 
 def average(array):
@@ -112,7 +112,7 @@ def average(array):
 
 def stddev(array):
     avg = average(array)    
-    return sqrt(average(map(lambda x: (x - avg)**2, array)))
+    return sqrt(average([(x - avg)**2 for x in array]))
     
     
 ######################
@@ -143,7 +143,7 @@ def analyzeCodons(seq, positions = None, data_table = cai_table):
     '''    
     
     if positions == None:
-        positions = range(0,len(seq),3)
+        positions = list(range(0,len(seq),3))
     
     seq = seq.lower();    
     codons = []
@@ -151,7 +151,7 @@ def analyzeCodons(seq, positions = None, data_table = cai_table):
     for i in positions:
         codon = seq[i:i+3]        
         codons.append(codon)
-        if data_table.has_key(codon):
+        if codon in data_table:
             codons_cai.append(data_table[codon])
         else:
             codons_cai.append("NA")
@@ -200,7 +200,7 @@ def analyze_hydropathy(seq):
     score = 0
     len_sq = 0
     for i in range(0,len(seq),3):
-        if hydropathy_index_table.has_key(seq[i:i+3]):
+        if seq[i:i+3] in hydropathy_index_table:
             score += (hydropathy_index_table[seq[i:i+3]])
             len_sq += 1
     score /= len_sq
@@ -211,7 +211,7 @@ def analyze_cai(seq):
     score = 0
     len_sq = 0
     for i in range(0,len(seq),3):
-        if cai_table.has_key(seq[i:i+3]):
+        if seq[i:i+3] in cai_table:
             score += log(cai_table[seq[i:i+3]])
             len_sq += 1
     score /= len_sq
@@ -258,7 +258,7 @@ def analyze_pwm_score(seq, pwm):
     max_score = -99
     max_pos   = 0 
     
-    pwm_length = len(pwm[pwm.keys()[0]])
+    pwm_length = len(pwm[list(pwm.keys())[0]])
     
     for pos in range(0,len(seq)-pwm_length+1):
         tmp_score = pwm_score(seq[pos:(pos+pwm_length)], pwm)
@@ -439,7 +439,7 @@ def analyze_structure_prob(seq,filename,window=50,region=[]):
         reg_avg = reg_avg/len(region)
         data['StructureProb'] = reg_avg        
     else:
-        data['StructureProb'] = sum(structure_pairs.values())/len(structure_pairs.keys())
+        data['StructureProb'] = sum(structure_pairs.values())/len(list(structure_pairs.keys()))
         
     data['StructureProbList'] = structure_pairs 
         
@@ -468,7 +468,7 @@ def analyze_ensemble(seq,filename,sample_size=100):
         
     system("echo '" + str(string_aux) + "' > " + filename + ".st")
     output_ss = Popen("./3rdParty/vienna/RNAeval -d2 < " + filename + ".st | perl -lne 'm/.* \((.*)\)$// print $1'", stdout=PIPE, shell=True).stdout.read().rstrip()
-    ens_st = map(lambda x: float(x), output_ss.rstrip().split('\n')[2:])
+    ens_st = [float(x) for x in output_ss.rstrip().split('\n')[2:]]
 
     data = {}
     data['StructureEnsembleSample'] = ens_st
@@ -828,7 +828,7 @@ def mutateCDS(sequence, keep_aa, mutableCodonsPosition, cds_region, pos=None, n_
         n_mutations = choice(n_mut)
         
         codons = (result[0])        
-        codons_ind = range(0,codons.__len__())
+        codons_ind = list(range(0,codons.__len__()))
         
         mutated = False
         while codons_ind.__len__() != 0 and n_mutations > 0:
@@ -841,7 +841,7 @@ def mutateCDS(sequence, keep_aa, mutableCodonsPosition, cds_region, pos=None, n_
                 new_codon = choice(alt_codons)
                 real_codon_pos = mutableCodonsPosition[rnd_ind]
                 codon_position = (real_codon_pos-cds_region[0])/3
-                all_codons = analyzeCodons(sequence,range(cds_region[0],cds_region[1]+1,3))[0]
+                all_codons = analyzeCodons(sequence,list(range(cds_region[0],cds_region[1]+1,3)))[0]
                 all_codons[codon_position]=new_codon
                 new_seq = sequence[:cds_region[0]] + ''.join(c for c in all_codons) + sequence[cds_region[1]+1:]
                 sequence = new_seq
@@ -900,7 +900,7 @@ def SimpleCAIOperator(sequence, cai_range, keep_aa, mutable_region, cds_regions,
 
     codons = (result[0])    
     codons_cai = (result[1])    
-    codons_ind = range(0,codons.__len__())
+    codons_ind = list(range(0,codons.__len__()))
     
     while not mutated and codons_ind.__len__() != 0:
         
@@ -914,9 +914,9 @@ def SimpleCAIOperator(sequence, cai_range, keep_aa, mutable_region, cds_regions,
         elif keep_aa == True and direction == '-':
             alt_codons = [c for c in aa2codon_table[codon2aa_table[rnd_codon]] if c!= rnd_codon and cai_table[c] < rnd_codon_cai and codon2aa_table[c]!='stop']
         elif keep_aa == False and direction == '+':
-            alt_codons = list(k for k,v in cai_table.iteritems() if v>rnd_codon_cai and codon2aa_table[k]!='stop')
+            alt_codons = list(k for k,v in cai_table.items() if v>rnd_codon_cai and codon2aa_table[k]!='stop')
         elif keep_aa == False and direction == '-':
-            alt_codons = list(k for k,v in cai_table.iteritems() if v<rnd_codon_cai and codon2aa_table[k]!='stop')
+            alt_codons = list(k for k,v in cai_table.items() if v<rnd_codon_cai and codon2aa_table[k]!='stop')
             
         if alt_codons.__len__() != 0:                      
             mutated = True
@@ -931,7 +931,7 @@ def SimpleCAIOperator(sequence, cai_range, keep_aa, mutable_region, cds_regions,
         #print "CAI operator: new_codon -> " + str(new_codon)    
         real_codon_pos = mutableCodonsPosition[rnd_ind]
         codon_position = (real_codon_pos-cai_range[0])/3
-        all_codons = analyzeCodons(sequence,range(cai_range[0],cai_range[1]+1,3))[0]             
+        all_codons = analyzeCodons(sequence,list(range(cai_range[0],cai_range[1]+1,3)))[0]             
         all_codons[codon_position]=new_codon
 
                                      
@@ -966,7 +966,7 @@ def SimpleHydropathyIndexOperator(sequence, hi_range, keep_aa, mutable_region, c
     result = analyzeCodons(sequence,mutableCodonsPosition,data_table = hydropathy_index_table)
     codons = (result[0])    
     codons_hi = (result[1])    
-    codons_ind = range(0,codons.__len__())
+    codons_ind = list(range(0,codons.__len__()))
     
     while not mutated and codons_ind.__len__() != 0:
         
@@ -980,9 +980,9 @@ def SimpleHydropathyIndexOperator(sequence, hi_range, keep_aa, mutable_region, c
         elif keep_aa == True and direction == '-':
             alt_codons = [c for c in codons_list if c!= rnd_codon and hydropathy_index_table[c] < rnd_codon_hi and codon2aa_table[c]!='stop' and hammingDistance(c, rnd_codon)==1]
         elif keep_aa == False and direction == '+':
-            alt_codons = list(k for k,v in cai_table.iteritems() if v>rnd_codon_hi and codon2aa_table[k]!='stop')
+            alt_codons = list(k for k,v in cai_table.items() if v>rnd_codon_hi and codon2aa_table[k]!='stop')
         elif keep_aa == False and direction == '-':
-            alt_codons = list(k for k,v in cai_table.iteritems() if v<rnd_codon_hi and codon2aa_table[k]!='stop')
+            alt_codons = list(k for k,v in cai_table.items() if v<rnd_codon_hi and codon2aa_table[k]!='stop')
             
         if alt_codons.__len__() != 0:                      
             mutated = True
@@ -993,7 +993,7 @@ def SimpleHydropathyIndexOperator(sequence, hi_range, keep_aa, mutable_region, c
         sys.stderr.write("SimpleHydropathyIndexOperator: Not able to mutate sequence\n")
         return None
     else:          
-        all_codons = analyzeCodons(sequence,range(hi_range[0],hi_range[1]+1,3))[0]             
+        all_codons = analyzeCodons(sequence,list(range(hi_range[0],hi_range[1]+1,3)))[0]             
         all_codons[rnd_ind]=new_codon 
                                      
         new_seq = sequence[:hi_range[0]] + ''.join(c for c in all_codons) + sequence[hi_range[1]+1:]
@@ -1122,7 +1122,7 @@ def get_core_cds(cds, core_path="/Users/cambray/Dropbox/WorkStuff/Sequences/Geno
         splitline = l.split(",")
         core.append(splitline[5].replace("'",""))
     h.close()
-    cds[0] = dict([(k, v) for (k, v) in cds[0].items() if k in core])
+    cds[0] = dict([(k, v) for (k, v) in list(cds[0].items()) if k in core])
     return cds        
 
 def regression_tai(cds, out_path="", win=21, length=90):
@@ -1133,7 +1133,7 @@ def regression_tai(cds, out_path="", win=21, length=90):
         seq = cds[gene][3:length+3].lower()
         if not len(seq)<length:
             score, smoothie = analyze_tai(seq, window=win)
-            reg    = lin(range(2,len(smoothie)+2), smoothie)
+            reg    = lin(list(range(2,len(smoothie)+2)), smoothie)
             if out_path:
                 h.write("%s,%s,%s,%s\n" % (gene,
                                            ",".join([str(n) for n in score]),

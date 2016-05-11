@@ -9,10 +9,10 @@ import os
 import sys
 
 def DB2FASTA(db_file,split=False):
-    print "Generating FASTA file(s) for " , db_file , "...",
+    print("Generating FASTA file(s) for " , db_file , "...", end=' ')
     
     if not os.path.exists(db_file):
-        print "File does not exist"
+        print("File does not exist")
         return 0
 
     #### Create connection to DB
@@ -48,7 +48,7 @@ def DB2FASTA(db_file,split=False):
     
     con.close()
     
-    print "Done!"
+    print("Done!")
     
 if __name__ == '__main__':
     pass

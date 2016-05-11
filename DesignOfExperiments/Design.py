@@ -14,7 +14,7 @@ class Design(object):
     '''
     def __init__(self, featuresList, featuresObj):
         #validate if ids only have one character
-        for feat in featuresObj.keys():
+        for feat in list(featuresObj.keys()):
             for l_id in featuresObj[feat]['thresholds']:
                 if len(str(l_id)) != 1:
                     raise Exception("Please use only one digit/character as the level identifier!\n")
@@ -22,7 +22,7 @@ class Design(object):
         self.featuresList       = featuresList
         self.n_features         = featuresList.__len__()        
         self.features           = featuresObj
-        self.thresholds         = { feature : featuresObj[feature]['thresholds'] for feature in featuresObj.keys() }         
+        self.thresholds         = { feature : featuresObj[feature]['thresholds'] for feature in list(featuresObj.keys()) }         
     
     
     

@@ -22,7 +22,7 @@ def DBStatistics(db_file):
     
     result = cur.fetchone()
     if result['Solutions Generated'] != 0:
-            print db_file , "\t" , result['Solutions Generated'] , "\t" , result['Designs Found'] , "\t" , result['Designs Found']/float(result['Solutions Generated'])
+            print(db_file , "\t" , result['Solutions Generated'] , "\t" , result['Designs Found'] , "\t" , result['Designs Found']/float(result['Solutions Generated']))
         
     con.close()
     

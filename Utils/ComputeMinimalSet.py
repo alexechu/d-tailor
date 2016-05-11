@@ -60,7 +60,7 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False, random_period=5000,
     in_ids = []
     for data in h1:
         #print data
-        if idnbr.has_key(data["des_solution_id"]):
+        if data["des_solution_id"] in idnbr:
             idnbr[data["des_solution_id"]] += 1
         else:
             idnbr[data["des_solution_id"]] = 1
@@ -71,7 +71,7 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False, random_period=5000,
     #init set
     if pkl_import:
         current_set = pickle.load(open(pkl_import,'rb'))
-        ids = current_set.keys()
+        ids = list(current_set.keys())
         # check if new combinations
         if len(ids)<len(in_ids):
             for id_comb in in_ids:
@@ -87,7 +87,7 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False, random_period=5000,
     distnt = {}
     idsumnt = {}
     total_dist_nt = 0
-    ids = current_set.keys()
+    ids = list(current_set.keys())
     allfullids = []
     for id_comb in ids:
         if idnbr[id_comb] > 1:
@@ -101,7 +101,7 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False, random_period=5000,
             distnt[ids[i]][ids[j]] = sum([1 for k in range(len(seqs_nt[fullid1])) if seqs_nt[fullid1][k]!=seqs_nt[fullid2][k]])        
             total_dist_nt += distnt[ids[i]][ids[j]]
             for id_comb in (ids[i],ids[j]):
-                if idsumnt.has_key(id_comb):
+                if id_comb in idsumnt:
                     idsumnt[id_comb]+=distnt[ids[i]][ids[j]]
                 else:
                     idsumnt[id_comb]=distnt[ids[i]][ids[j]]
@@ -116,7 +116,7 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False, random_period=5000,
         totaltry+=1
         currenttry+=1
         if change_flag:
-            print "stop random"
+            print("stop random")
             change_flag = False
             if not focus_period:
                 random_flag = 1
@@ -125,11 +125,11 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False, random_period=5000,
             # identify max id_comb
             sumidnt = {}
             for id_comb in ids:
-                if sumidnt.has_key(idsumnt[id_comb]):
+                if idsumnt[id_comb] in sumidnt:
                     sumidnt[idsumnt[id_comb]].append(id_comb)
                 else:
                     sumidnt[idsumnt[id_comb]]=[id_comb]
-            sums = sumidnt.keys()
+            sums = list(sumidnt.keys())
             sums.sort(reverse=True)
             # get the % highest distance ids (those with several solutions available)
             maxnbr = 0.20 * len(ids)
@@ -147,7 +147,7 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False, random_period=5000,
             if not len(fullidsol):
                 random_flag = 0
                 currenttry  = 0
-                print "start random"
+                print("start random")
             #print combi, jackpot
         elif random_flag > 0:
             combi, jackpot = choice(allfullids)
@@ -157,7 +157,7 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False, random_period=5000,
             combi, jackpot = choice(allfullids)
             while jackpot == current_set[combi]:
                 combi, jackpot = choice(allfullids)
-            print "start random"
+            print("start random")
             currenttry = 0
         # update status
         random_flag+=1
@@ -177,11 +177,11 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False, random_period=5000,
                     new_idsumnt[id_comb] += new_distnt[id_comb] - distnt[combi][id_comb]
                     new_idsumnt[combi] += new_distnt[id_comb] - distnt[combi][id_comb]
         if (new_total_dist_nt < total_dist_nt):    
-            print "%s (%s):\t%i\t%i" % (totaltry, currenttry, total_dist_nt, new_total_dist_nt-total_dist_nt)
+            print("%s (%s):\t%i\t%i" % (totaltry, currenttry, total_dist_nt, new_total_dist_nt-total_dist_nt))
             total_dist_nt = new_total_dist_nt
             idsumnt = new_idsumnt
             current_set[combi] = jackpot
-            for id_comb in new_distnt.keys():
+            for id_comb in list(new_distnt.keys()):
                 if  id_comb < combi:
                     distnt[id_comb][combi] = new_distnt[id_comb]
                 else:
@@ -214,9 +214,9 @@ def get_final_set_feats(seq_in, pkl, seq_out, get_distance=True, verbose=True):
     current_set = {}
     h = csv.DictReader(open(seq_in))
     for data in h:
-        if data.has_key(None):
+        if None in data:
             data.pop(None)
-        if idnbr.has_key(data["des_solution_id"]):
+        if data["des_solution_id"] in idnbr:
             idnbr[data["des_solution_id"]] += 1
         else:
             idnbr[data["des_solution_id"]] = 1
@@ -230,14 +230,14 @@ def get_final_set_feats(seq_in, pkl, seq_out, get_distance=True, verbose=True):
         pkl_file = open(pkl,'rb')
         current_set = pickle.load(pkl_file)
         # modify data structure as needed ie if has not been extended
-        if not type(current_set[current_set.keys()[0]]) is list:
+        if not type(current_set[list(current_set.keys())[0]]) is list:
             for id_comb in current_set:
                 current_set[id_comb] = [current_set[id_comb]]
     else:
-        current_set = {id_comb:range(1,idnbr[id_comb]+1) for id_comb in idnbr}
+        current_set = {id_comb:list(range(1,idnbr[id_comb]+1)) for id_comb in idnbr}
     #print current_set
     #
-    ids = current_set.keys()
+    ids = list(current_set.keys())
     ids.sort()
     total = 0.0
     if get_distance:
@@ -279,7 +279,7 @@ def get_final_set_feats(seq_in, pkl, seq_out, get_distance=True, verbose=True):
                         fullid2  = "%s_%s" % (ids[j], current_set[ids[j]][j2])
                         if finalid2 == finalid1:
                             distnt[finalid1][finalid2] = 0
-                        elif distnt.has_key(finalid2):
+                        elif finalid2 in distnt:
                             distnt[finalid1][finalid2] = distnt[finalid2][finalid1]
                         else:
                             distnt[finalid1][finalid2] = sum([1 for k in range(len(seqs_nt[fullid1])) if seqs_nt[fullid1][k]!=seqs_nt[fullid2][k]])
@@ -291,11 +291,11 @@ def get_final_set_feats(seq_in, pkl, seq_out, get_distance=True, verbose=True):
         sd_nt      = sqrt(sum([(dist-average_nt)**2 for dist in alldistnt])/(total-1))
         hnt.write("average distance: %.2f nt +/- %.2f (sd)" % (average_nt, sd_nt))
         if verbose:
-            print"\n\n"
-            print"################### Summary ###################"
-            print"number of combinations: %d" % (current_set.keys().__len__())
-            print"average distance nt: %.2f +/- %.2f" % (average_nt, sd_nt)
-            print"###############################################"
+            print("\n\n")
+            print("################### Summary ###################")
+            print("number of combinations: %d" % (list(current_set.keys()).__len__()))
+            print("average distance nt: %.2f +/- %.2f" % (average_nt, sd_nt))
+            print("###############################################")
         return ((average_nt, sd_nt))
     return                
 

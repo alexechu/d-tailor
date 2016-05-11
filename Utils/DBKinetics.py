@@ -25,7 +25,7 @@ def DBKinetics(db_file,resolution=50):
     #print "Generated Solutions \t Desired Solutions Found"
 
     #it = range(0,total_sol,total_sol/resolution)
-    it = range(0,total_sol,10)
+    it = list(range(0,total_sol,10))
     it.append(total_sol)
 
     #get statistics
@@ -34,7 +34,7 @@ def DBKinetics(db_file,resolution=50):
         result = cur.fetchone()
     
         #print i,"\t",result['c']
-        print result['c']
+        print(result['c'])
     
     con.close()
     
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         
     for i in range(1,31):
         db_file = "../testFiles/outputFiles/tfec_ff_rnd_samp_s"+str(i)+".sqlite"
-        print "seed"+str(i)+",end"
+        print("seed"+str(i)+",end")
         DBKinetics(db_file)
     
     #One-time
