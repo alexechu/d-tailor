@@ -4,12 +4,14 @@ Created on Dec 15, 2012
 @author: jcg
 '''
 
-from Features.Feature import Feature
+import uuid
+
+import Features.Feature
 import Functions
-from uuid import uuid4
+import Solution
 
 
-class StructureProb(Feature):
+class StructureProb(Features.Feature.Feature):
     """
     StructureProb Feature
         solution - solution where structure accessibility probability should be computed
@@ -21,13 +23,14 @@ class StructureProb(Feature):
         keep_aa - boolean option indicating if in the design mode amino acids should be kept
     """
 
-    def __init__(self, structureObject=None, solution=None, label="", args={'structure_range': (0, 59),
-                                                                            'mutable_region': None,
-                                                                            'cds_region': None,
-                                                                            'keep_aa': True}):
+    def __init__(self, structureObject=None, solution=None, label="",
+                 args={'structure_range': (0, 59),
+                 'mutable_region': None,
+                 'cds_region': None,
+                 'keep_aa': True}):
 
         # General properties of feature
-        Feature.__init__(self, solution=solution, label=label)
+        Features.Feature.Feature.__init__(self, solution=solution, label=label)
         # Specifics of this Feature
         self.structurefile = solution.solid + label
         self.structure_range = args['structure_range']
@@ -85,7 +88,9 @@ class StructureProb(Feature):
         if not new_seq:
             return None
 
-        return Solution.Solution(sol_id=str(uuid4().int), sequence=new_seq, cds_region=self.cds_region,
-                                 mutable_region=self.solution.mutable_region, parent=self.solution, design=self.solution.designMethod)
-
-import Solution
+        return Solution.Solution(sol_id=str(uuid.uuid4().int),
+                                 sequence=new_seq,
+                                 cds_region=self.cds_region,
+                                 mutable_region=self.solution.mutable_region,
+                                 parent=self.solution,
+                                 design=self.solution.designMethod)

@@ -5,7 +5,10 @@ Created on Nov 11, 2011
 '''
 
 import sys
-from uuid import uuid4
+import uuid
+
+import Functions
+import Solution
 
 
 class Feature(object):
@@ -162,8 +165,13 @@ class Feature(object):
             pos,
             n_mut=n_mut)
 
-        return Solution.Solution(sol_id=str(uuid4().int), sequence=new_seq, cds_region=self.solution.cds_region, keep_aa=self.solution.keep_aa,
-                                 mutable_region=self.solution.mutable_region, parent=self.solution, design=self.solution.designMethod)
+        return Solution.Solution(sol_id=str(uuid.uuid4().int),
+                                 sequence=new_seq,
+                                 cds_region=self.solution.cds_region,
+                                 keep_aa=self.solution.keep_aa,
+                                 mutable_region=self.solution.mutable_region,
+                                 parent=self.solution,
+                                 design=self.solution.designMethod)
 
     def mutate(self, mutable_region=None):
         '''
@@ -171,7 +179,3 @@ class Feature(object):
         '''
         pass
         return self.randomMutation(mutable_region=mutable_region)
-
-
-import Solution
-import Functions

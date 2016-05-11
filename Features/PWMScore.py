@@ -4,12 +4,14 @@ Created on Nov 16, 2011
 @author: jcg
 '''
 
-from Features.Feature import Feature
+import uuid
+
+import Features.Feature
 import Functions
-from uuid import uuid4
+import Solution
 
 
-class PWMScore(Feature):
+class PWMScore(Features.Feature.Feature):
     """
     PWMScore Feature
         solution - solution where PWM score should be computed
@@ -26,7 +28,7 @@ class PWMScore(Feature):
                                                       'cds_regions': None,
                                                       'keep_aa': True}):
         # General properties of feature
-        Feature.__init__(self, solution=solution, label=label)
+        Features.Feature.Feature.__init__(self, solution=solution, label=label)
         # Specifics of this Feature
         self.pwm = args['pwm']
         self.pwm_range = args['pwm_range']
@@ -70,7 +72,9 @@ class PWMScore(Feature):
                 1] = list(mutated_seq)
         new_seq = "".join(new_seq)
 
-        return Solution.Solution(sol_id=str(uuid4().int), sequence=new_seq, cds_regions=self.cds_regions,
-                                 mutable_region=self.mutable_region, parent=self.solution, design=self.solution.designMethod)
-
-import Solution
+        return Solution.Solution(sol_id=str(uuid.uuid4().int),
+                                 sequence=new_seq,
+                                 cds_regions=self.cds_regions,
+                                 mutable_region=self.mutable_region,
+                                 parent=self.solution,
+                                 design=self.solution.designMethod)

@@ -4,12 +4,14 @@ Created on Nov 16, 2011
 @author: jcg
 '''
 
-from Features.Feature import Feature
+import uuid
+
+import Features.Feature
 import Functions
-from uuid import uuid4
+import Solution
 
 
-class Structure(Feature):
+class Structure(Features.Feature.Feature):
     """
     Structure Feature
         solution - solution where structure should be computed
@@ -21,14 +23,15 @@ class Structure(Feature):
         keep_aa - boolean option indicating if in the design mode amino acids should be kept
     """
 
-    def __init__(self, structureObject=None, solution=None, label="", args={'structure_range': (0, 59),
-                                                                            'mutable_region': None,
-                                                                            'cds_region': None,
-                                                                            'keep_aa': True}):
+    def __init__(self, structureObject=None, solution=None, label="",
+                 args={'structure_range': (0, 59),
+                       'mutable_region': None,
+                       'cds_region': None,
+                       'keep_aa': True}):
 
         if structureObject is None:  # create new instance
             # General properties of feature
-            Feature.__init__(self, solution=solution, label=label)
+            Features.Feature.Feature.__init__(self, solution=solution, label=label)
             # Specifics of this Feature
             self.structurefile = solution.solid + label
             self.structure_range = args['structure_range']
@@ -44,7 +47,7 @@ class Structure(Feature):
             self.set_scores()
             self.set_level()
         else:  # copy instance
-            Feature.__init__(self, structureObject)
+            Features.Feature.Feature.__init__(self, structureObject)
             self.structurefile = structureObject.structurefile
             self.structure_range = structureObject.structure_range
             self.sequence = structureObject.sequence
@@ -74,7 +77,7 @@ class Structure(Feature):
             ds_bases=ds_bases)
         if not new_seq:
             return None
-        return Solution.Solution(sol_id=str(uuid4().int), sequence=new_seq, cds_region=self.cds_region,
+        return Solution.Solution(sol_id=str(uuid.uuid4().int), sequence=new_seq, cds_region=self.cds_region,
                                  mutable_region=self.mutable_region, parent=self.solution, design=self.solution.designMethod)
 
 
@@ -150,5 +153,3 @@ class StructureDoubleStranded(Structure):
                 # increase number of single bases (decrease double stranded
                 # bases)
                 self.targetInstructions['direction'] = '+'
-
-import Solution

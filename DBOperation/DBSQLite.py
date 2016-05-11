@@ -4,16 +4,16 @@ Created on Nov 1, 2012
 @author: jcg
 '''
 
-from DBOperation.DBAbstract import DBAbstract
 from sqlite3 import connect, Row
-from time import strftime
-from random import choice
-from uuid import uuid4
-from subprocess import check_output
-from socket import gethostbyname, gethostname
+import time
+import random
+import uuid
+import subprocess
+import socket
 
+import DBOperation.DBAbstract
 
-class DBSQLite(DBAbstract):
+class DBSQLite(DBOperation.DBAbstract.DBAbstract):
     '''
     Constructor
     '''
@@ -23,7 +23,7 @@ class DBSQLite(DBAbstract):
         self.dbfile = dbfile
         self.designMethod = designMethod
         self.seedSequence = seedSequence
-        self.seedId = str(uuid4().int)
+        self.seedId = str(uuid.uuid4().int)
 
         # SQL queries buffers
         self.des_solutions = {}
@@ -42,7 +42,7 @@ class DBSQLite(DBAbstract):
             self.DBInit()
 
         # Register worker
-        self.worker_id = str(uuid4().int)
+        self.worker_id = str(uuid.uuid4().int)
         self.registerWorker()
 
     def DBInit(self):
@@ -103,9 +103,9 @@ class DBSQLite(DBAbstract):
         self.cur.executemany(sql, all_comb)
 
     def registerWorker(self):
-        start_time = strftime("%Y-%m-%d %H:%M:%S %Z")
-        hostname = check_output("hostname").rstrip()
-        ip = gethostbyname(gethostname()).rstrip()
+        start_time = time.strftime("%Y-%m-%d %H:%M:%S %Z")
+        hostname = subprocess.check_output("hostname").rstrip()
+        ip = socket.gethostbyname(socket.gethostname()).rstrip()
 
         self.cur.execute("insert into worker(worker_id, hostname, ip, time_start, time_finish) values (?,?,?,?,NULL);",
                          (self.worker_id, hostname, ip, start_time))
@@ -160,7 +160,7 @@ class DBSQLite(DBAbstract):
             des_solution = dict(des_solution)
             #des_sol = des_solutions[0]
             # set worker as working on desired solution
-            start_time = strftime("%Y-%m-%d %H:%M:%S %Z")
+            start_time = time.strftime("%Y-%m-%d %H:%M:%S %Z")
             self.cur.execute(
                 "update desired_solution set worker_id=?, status=?, start_time=? where des_solution_id = ?;",
                 (self.worker_id,
@@ -175,7 +175,7 @@ class DBSQLite(DBAbstract):
             des_solutions = (self.cur.fetchall())
 
             if des_solutions != []:
-                return dict(choice(des_solutions))
+                return dict(random.choice(des_solutions))
             else:
                 return None
 
@@ -218,7 +218,7 @@ class DBSQLite(DBAbstract):
         if all_solutions == []:
             return None
         else:
-            return dict(choice(all_solutions))
+            return dict(random.choice(all_solutions))
         pass
 
     def DBCheckDesign(self, desired_solution_id):
@@ -294,7 +294,7 @@ class DBSQLite(DBAbstract):
         # Insert buffered solutions into DB
         self.flushSQL()
 
-        finish_time = strftime("%Y-%m-%d %H:%M:%S %Z")
+        finish_time = time.strftime("%Y-%m-%d %H:%M:%S %Z")
         self.cur.execute(
             "update worker set time_finish = ? where worker_id = ?;",
             (finish_time,

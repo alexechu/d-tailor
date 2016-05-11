@@ -4,12 +4,14 @@ Created on Nov 16, 2011
 @author: jcg
 '''
 
-from Features.Feature import Feature
+import uuid
+
+import Features.Feature
 import Functions
-from uuid import uuid4
+import Solution
 
 
-class NucleotideContent(Feature):
+class NucleotideContent(Features.Feature.Feature):
     """
     Nucleotide Content Feature
         solution - solution where nucleotide content should be computed
@@ -20,13 +22,14 @@ class NucleotideContent(Feature):
         keep_aa - boolean option indicating if in the design mode amino acids should be kept
     """
 
-    def __init__(self, nucleotideContentObject=None, solution=None, label="", args={'ntcontent_range': (0, 9),
-                                                                                    'mutable_region': None,
-                                                                                    'cds_region': None,
-                                                                                    'keep_aa': True}):
+    def __init__(self, nucleotideContentObject=None, solution=None, label="",
+                 args={'ntcontent_range': (0, 9),
+                       'mutable_region': None,
+                       'cds_region': None,
+                       'keep_aa': True}):
         if nucleotideContentObject is None:  # create new instance
             # General properties of feature
-            Feature.__init__(self, solution=solution, label=label)
+            Features.Feature.Feature.__init__(self, solution=solution, label=label)
             # Specifics of this Feature
             self.ntcontent_range = args['ntcontent_range']
             self.sequence = solution.sequence[
@@ -40,7 +43,7 @@ class NucleotideContent(Feature):
             self.set_scores()
             self.set_level()
         else:
-            Feature.__init__(self, nucleotideContentObject)
+            Features.Feature.Feature.__init__(self, nucleotideContentObject)
             self.ntcontent_range = nucleotideContentObject.ntcontent_range
             self.sequence = nucleotideContentObject.sequence
             self.mutable_region = nucleotideContentObject.mutable_region
@@ -64,8 +67,12 @@ class NucleotideContent(Feature):
             keep_aa=self.keep_aa)
         if not new_seq:
             return None
-        return Solution.Solution(sol_id=str(uuid4().int), sequence=new_seq, cds_region=self.cds_region, mutable_region=list(
-            self.mutable_region), parent=self.solution, design=self.solution.designMethod)
+        return Solution.Solution(sol_id=str(uuid.uuid4().int),
+                                 sequence=new_seq,
+                                 cds_region=self.cds_region,
+                                 mutable_region=list(self.mutable_region),
+                                 parent=self.solution,
+                                 design=self.solution.designMethod)
 
 
 class NucleotideContentAT(NucleotideContent):
@@ -132,5 +139,3 @@ class NucleotideContentC(NucleotideContent):
         NucleotideContent.__init__(self, nucleotideContentObject)
         self.nucleotides = ['c']
         self.set_level()
-
-import Solution

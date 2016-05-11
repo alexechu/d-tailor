@@ -5,10 +5,10 @@ Created on Nov 1, 2011
 '''
 
 import sys
-from random import choice
-from Functions import randomMutationOperator
-from uuid import uuid4
+import uuid
+import random
 
+import Functions
 
 class Solution:
     '''
@@ -71,10 +71,12 @@ class Solution:
 
         return same
 
-    def mutate(self, desiredSolution=None, random=False):
+    def mutate(self, desiredSolution=None, arg_random=False):
 
-        if desiredSolution is None or random or self.designMethod.listDesigns == [
-        ] or self.features == {}:
+        if desiredSolution is None or \
+           arg_random or \
+           self.designMethod.listDesigns == [] or \
+           self.features == {}:
             return self.randomMutation()
         else:
             # get features with targets
@@ -86,17 +88,21 @@ class Solution:
             if mutable == []:
                 return None
 
-            return choice(mutable).mutate()
-            # return choice(mutable).randomMutation()
+            return random.choice(mutable).mutate()
+            # return random.choice(mutable).randomMutation()
             # return self.randomMutation()
 
     def randomMutation(self, pos=None, n_mut=[1, 2]):
-        new_seq = randomMutationOperator(
-            self.sequence,
-            self.keep_aa,
-            self.mutable_region,
-            self.cds_region,
-            pos,
-            n_mut)
-        return Solution(sol_id=str(uuid4().int), sequence=new_seq, cds_region=self.cds_region,
-                        keep_aa=self.keep_aa, mutable_region=self.mutable_region, parent=self, design=self.designMethod)
+        new_seq = Functions.randomMutationOperator(self.sequence,
+                                                   self.keep_aa,
+                                                   self.mutable_region,
+                                                   self.cds_region,
+                                                   pos,
+                                                   n_mut)
+        return Solution(sol_id=str(uuid.uuid4().int),
+                        sequence=new_seq,
+                        cds_region=self.cds_region,
+                        keep_aa=self.keep_aa,
+                        mutable_region=self.mutable_region,
+                        parent=self,
+                        design=self.designMethod)

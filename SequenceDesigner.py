@@ -4,13 +4,14 @@ Created on Nov 1, 2012
 @author: jcg
 '''
 
-from DBOperation.DBSQLite import DBSQLite
-from Solution import Solution
+import sys
+import DBOperation.DBSQLite
+
 from time import time
 from random import choice
-from Functions import hammingDistance
-import sys
 
+import Functions
+import Solution
 
 class SequenceDesigner(object):
 
@@ -27,7 +28,7 @@ class SequenceDesigner(object):
         self.max_iterations = 100  # maximum number of tries allowed to find desired solution
         self.max_sol_counter = 10000
 
-        self.dbconnection = DBSQLite(
+        self.dbconnection = DBOperation.DBSQLite.DBSQLite(
             dbfile=dbfile,
             designMethod=design,
             initialize=createDB,
@@ -100,7 +101,7 @@ class SequenceDesigner(object):
         last_counter = 1
         last_timepoint = time()
 
-        master = Solution(
+        master = Solution.Solution(
             sol_id=self.dbconnection.seedId,
             sequence=self.dbconnection.seedSequence,
             design=self.designMethod)
@@ -291,11 +292,11 @@ class SequenceDesigner(object):
             print("# Number of generated solutions: ", sol_counter)
             print(
                 "# Distance to seed: ",
-                hammingDistance(
+                Functions.hammingDistance(
                     master.sequence,
                     solution.sequence))
             print("###########################\n")
 
-        return(sol_counter, hammingDistance(master.sequence, solution.sequence))
+        return(sol_counter, Functions.hammingDistance(master.sequence, solution.sequence))
 
         print("Program finished...")

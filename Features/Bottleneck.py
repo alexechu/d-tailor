@@ -4,14 +4,16 @@ Created on Nov 16, 2011
 @author: jcg
 '''
 
-from Features.Feature import Feature
-import Functions
 import sys
-from uuid import uuid4
-from random import choice
+import uuid
+import random
+
+import Features.Feature
+import Functions
+import Solution
 
 
-class Bottleneck(Feature):
+class Bottleneck(Features.Feature.Feature):
     """
     Bottleneck Feature as described in doi:10.1186/gb-2011-12-2-r12
         solution - solution where bottleneck should be computed
@@ -21,12 +23,13 @@ class Bottleneck(Feature):
         keep_aa - boolean option indicating if in the design mode amino acids should be kept
     """
 
-    def __init__(self, bottleneckObject=None, solution=None, label="", args={'bottleneck_range': (0, 59),
-                                                                             'mutable_region': None,
-                                                                             'keep_aa': True}):
+    def __init__(self, bottleneckObject=None, solution=None, label="",
+                 args={'bottleneck_range': (0, 59),
+                 'mutable_region': None,
+                 'keep_aa': True}):
         if bottleneckObject is None:  # create new instance
             # General properties of feature
-            Feature.__init__(self, solution=solution, label=label)
+            Features.Feature.Feature.__init__(self, solution=solution, label=label)
             # Specifics of this Feature
             self.bottleneck_range = args['bottleneck_range']
             self.sequence = solution.sequence[
@@ -41,7 +44,7 @@ class Bottleneck(Feature):
             self.set_level()
             self.calculate_mutable_segments()
         else:  # copy instance
-            Feature.__init__(self, bottleneckObject)
+            Features.Feature.Feature.__init__(self, bottleneckObject)
             self.bottleneck_range = bottleneckObject.bottleneck_range
             self.sequence = bottleneckObject.sequence
             self.mutable_region = bottleneckObject.mutable_region
@@ -122,8 +125,12 @@ class Bottleneck(Feature):
 
         new_seq = "".join(new_seq)
 
-        return Solution.Solution(sol_id=str(uuid4().int), sequence=new_seq, cds_region=self.solution.cds_region,
-                                 mutable_region=self.mutable_region, parent=self.solution, design=self.solution.designMethod)
+        return Solution.Solution(sol_id=str(uuid.uuid4().int),
+                                 sequence=new_seq,
+                                 cds_region=self.solution.cds_region,
+                                 mutable_region=self.mutable_region,
+                                 parent=self.solution,
+                                 design=self.solution.designMethod)
 
 
 class BottleneckPosition(Bottleneck):
@@ -153,7 +160,7 @@ class BottleneckPosition(Bottleneck):
             levelsToMutate = [
                 level for level in list(
                     self.segmentMutation.keys()) if self.segmentMutation[level] != []]
-            rndLevel = choice(levelsToMutate)
+            rndLevel = random.choice(levelsToMutate)
 
             if rndLevel == target_level:
                 self.targetInstructions['segment'] = rndLevel
@@ -207,26 +214,24 @@ class BottleneckRelativeStrength(Bottleneck):
 
             if target_level_for_strength - self.level > 0:
 
-                if len(other_segments) == 0 or choice(
+                if len(other_segments) == 0 or random.choice(
                         [True, False, False]):  # increase bottleneck strength in target segment
                     self.targetInstructions[
                         'segment'] = target_level_for_position
                     self.targetInstructions['direction'] = '+'  # increase
                 else:  # decrease bottleneck strength in segments other than target
-                    self.targetInstructions['segment'] = choice(other_segments)
+                    self.targetInstructions['segment'] = random.choice(other_segments)
                     self.targetInstructions['direction'] = '-'  # decrease
             else:
-                if len(other_segments) == 0 or choice(
+                if len(other_segments) == 0 or random.choice(
                         [True, False, False]):  # decrease bottleneck strength in target segment
                     self.targetInstructions[
                         'segment'] = target_level_for_position
                     self.targetInstructions['direction'] = '-'  # decrease
                 else:  # increase bottleneck strength in segments other than target
-                    self.targetInstructions['segment'] = choice(other_segments)
+                    self.targetInstructions['segment'] = random.choice(other_segments)
                     self.targetInstructions['direction'] = '+'  # increase
 
             return True
 
         return False
-
-import Solution

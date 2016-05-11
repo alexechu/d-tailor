@@ -4,9 +4,7 @@ Created on Nov 11, 2012
 @author: jcg
 '''
 
-from itertools import product
-import sys
-
+import itertools
 
 class Design(object):
     '''
@@ -66,7 +64,7 @@ class FullFactorial(Design):
 
     def computeCombinations(self):
         pass
-        return list(map(".".join, eval("product('" + "','".join([''.join(
+        return list(map(".".join, eval("itertools.product('" + "','".join([''.join(
             [str(x) for x in self.thresholds[feat]]) for feat in self.featuresList]) + "')")))
 
 

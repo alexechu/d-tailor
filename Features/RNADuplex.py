@@ -4,11 +4,11 @@ Created on Jan 24, 2012
 @author: jcg
 '''
 
-from Features.Feature import Feature
+import Features.Feature
 import Functions
+import Solution
 
-
-class RNADuplex(Feature):
+class RNADuplex(Features.Feature.Feature):
     """
     RNADuplex Feature
         solution1 - molecule1 to hybridize
@@ -18,11 +18,12 @@ class RNADuplex(Feature):
         NOTE: Design mode not implemented for this feature
     """
 
-    def __init__(self, duplexObject=None, solution1=None, solution2=None, label="", args={'rnaMolecule1region': None,
-                                                                                          'rnaMolecule2region': None}):
+    def __init__(self, duplexObject=None, solution1=None, solution2=None,
+                 label="", args={'rnaMolecule1region': None,
+                                 'rnaMolecule2region': None}):
         if duplexObject is None:
             # General properties of feature
-            Feature.__init__(self, solution=solution1, label=label)
+            Features.Feature.Feature.__init__(self, solution=solution1, label=label)
             # Specifics of this Feature
             self.solution = solution1
             self.solution2 = solution2
@@ -48,7 +49,7 @@ class RNADuplex(Feature):
             self.set_level()
         else:
             # General properties of feature
-            Feature.__init__(self, duplexObject)
+            Features.Feature.Feature.__init__(self, duplexObject)
             # Specifics of this Feature
             self.solution = duplexObject.solution
             self.solution2 = duplexObject.solution2
@@ -76,7 +77,7 @@ class RNADuplex(Feature):
         pass
 
     def mutate(self):
-        return Feature.randomMutation(self, mutable_region=self.mutable_region)
+        return Features.Feature.Feature.randomMutation(self, mutable_region=self.mutable_region)
 
 
 class RNADuplexRibosome(RNADuplex):
@@ -128,6 +129,3 @@ class RNADuplexMFE(RNADuplex):
             Functions.appendLabelToDict(
                 scoring_function(self.duplexFile),
                 self.label))
-
-
-import Solution
