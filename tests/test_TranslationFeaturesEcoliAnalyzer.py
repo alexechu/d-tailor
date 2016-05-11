@@ -58,9 +58,11 @@ class TranslationFeaturesEcoliAnalyzer(SequenceAnalyzer):
             print(",".join([solution.solid, str(solution.scores['sd16sRNADuplexMFE']), str(
                 solution.scores['utrStructureMFE']), str(solution.scores['cdsCAI'])]))
 
-if __name__ == '__main__':
-
+def test_TranslationFeaturesEcoliAnalyzer():
     seqAnalyzerTest = TranslationFeaturesEcoliAnalyzer(
         project_dir + "/testFiles/genomes/partial_ecoli_genome.csv", "CSV")
     #seqAnalyzerTest = TranslationFeaturesEcoliAnalyzer(project_dir+"/testFiles/genomes/ecoli_genome.csv","CSV")
     seqAnalyzerTest.run()
+
+if __name__ == '__main__':
+    test_TranslationFeaturesEcoliAnalyzer()
