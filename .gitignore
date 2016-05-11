@@ -1,5 +1,7 @@
-# Text editor temporary files
+# Other temporary files
 *~
+*.seq
+*.fa
 
 # Byte-compiled / optimized / DLL files
 */__pycache__/*
