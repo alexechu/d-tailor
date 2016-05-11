@@ -3,6 +3,9 @@
 *.seq
 *.fa
 
+# Don't keep object files under version control
+*.o
+
 # Byte-compiled / optimized / DLL files
 */__pycache__/*
 *.py[cod]
