@@ -5,7 +5,7 @@ Created on Nov 1, 2012
 '''
 
 import sys
-from .Solution import Solution
+from Solution import Solution
 from csv import DictReader
 
 

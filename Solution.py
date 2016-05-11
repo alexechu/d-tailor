@@ -6,7 +6,7 @@ Created on Nov 1, 2011
 
 import sys
 from random import choice
-from .Functions import randomMutationOperator
+from Functions import randomMutationOperator
 from uuid import uuid4
 
 

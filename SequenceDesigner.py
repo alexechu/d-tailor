@@ -4,11 +4,11 @@ Created on Nov 1, 2012
 @author: jcg
 '''
 
-from .DBOperation.DBSQLite import DBSQLite
-from .Solution import Solution
+from DBOperation.DBSQLite import DBSQLite
+from Solution import Solution
 from time import time
 from random import choice
-from .Functions import hammingDistance
+from Functions import hammingDistance
 import sys
 
 

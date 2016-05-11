@@ -4,7 +4,7 @@ Created on Oct 3, 2011
 @author: jcg
 '''
 
-from .Data import *
+from Data import *
 from math import log, exp, sqrt
 from random import randint, choice
 import string
