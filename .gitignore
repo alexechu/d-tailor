@@ -2,11 +2,7 @@
 *~
 *.seq
 *.fa
-tmp/transterm_files
-tmp/unafold_files
-tmp/structures
-tmp/unafold
-tmp/viennarna_files
+tmp/
 
 # Don't keep object files under version control
 *.o
