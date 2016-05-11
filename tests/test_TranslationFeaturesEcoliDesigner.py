@@ -4,13 +4,14 @@ Created on Dec 22, 2012
 @author: jcg
 '''
 
-import Functions
 import sys
+
+import Functions
 from SequenceDesigner import SequenceDesigner
 from Features.Structure import Structure, StructureMFE
 from Features import CAI, RNADuplex
 from DesignOfExperiments.Design import RandomSampling, Optimization, FullFactorial
-from Data import project_dir
+import Data
 
 
 class TranslationFeaturesEcoliDesigner(SequenceDesigner):
@@ -184,8 +185,7 @@ def test_TranslationFeaturesEcoliDesigner():
         "tfec",
         seed1,
         design,
-        project_dir +
-        "/testFiles/outputFiles/tfec_test",
+        Data.project_dir + "/testFiles/outputFiles/tfec_test",
         createDB=True)
     tfec_designer.run(selection="directional")
 
