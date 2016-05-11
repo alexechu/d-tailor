@@ -393,7 +393,8 @@ def analyze_duplex_structure(seq1, seq2, filename, debug=False,
         os.rename(fn, "tmp/unafold_files/" + fn)
 
     if not debug:
-        seq1_file.close()
+        os.remove(seq1_file.name)
+
         os.remove(seq2_filename)
 
         for fn in glob.glob("%s*.dG" % filename):
