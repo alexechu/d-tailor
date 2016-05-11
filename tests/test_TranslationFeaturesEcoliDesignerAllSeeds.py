@@ -33,21 +33,19 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
         solution.keep_aa = True
 
         cai_obj = CAI.CAI(
-            solution=solution, label="cds", args={
-                'cai_range': (
-                    49, len(
-                        solution.sequence)), 'mutable_region': list(
-                    range(
-                        49, len(
-                            solution.sequence)))})
+            solution=solution,
+            label="cds",
+            args={'cai_range': (49, len(solution.sequence)),
+                  'mutable_region': list(range(49, len(solution.sequence)))
+                  })
 
         # Look for RBS
         dup_obj1 = RNADuplex.RNADuplexRibosome(
-            solution1=solution, label="sd16s", args={
-                'rnaMolecule1region': (
-                    25, 48), 'mutable_region': list(
-                    range(
-                        25, 48))})
+            solution1=solution,
+            label="sd16s",
+            args={'rnaMolecule1region': (25, 48),
+                  'mutable_region': list(range(25, 48))
+                  })
         dup_mfe = RNADuplex.RNADuplexMFE(dup_obj1)
         dup_obj1.add_subfeature(dup_mfe)
 
@@ -55,14 +53,9 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
         st1_obj = Structure(
             solution=solution,
             label="utr",
-            args={
-                'structure_range': (
-                    49 - 30,
-                    49 + 30),
-                'mutable_region': list(
-                    range(
-                        49 - 30,
-                        49 + 30))})
+            args={'structure_range': (49 - 30, 49 + 30),
+                  'mutable_region': list(range(49 - 30, 49 + 30))
+                  })
         st_mfe = StructureMFE(st1_obj)
         st1_obj.add_subfeature(st_mfe)
 
@@ -74,10 +67,9 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
         '''
         Solution validation tests
         '''
-        if solution.sequence is None or (
-                '?' in list(solution.levels.values())):
-            sys.stderr.write(
-                "SolutionValidator: Level unknown - " + str(solution.levels) + "\n")
+        if solution.sequence is None or ('?' in list(solution.levels.values())):
+            print("SolutionValidator: Level unknown - ", solution.levels,
+                  file=sys.stderr)
             solution.valid = False
             return 0
 
@@ -90,20 +82,19 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
         (score, position, spacer) = Functions.look_for_promoters(designed_region)
         if score >= 15.3990166:  # 0.95 percentile for Promoter PWM scores
             valid = False
-            sys.stderr.write(
-                "SolutionValidator: High Promoter score: " +
-                str(score) +
-                "\n")
+            print("SolutionValidator: High Promoter score: ", score,
+                  file=sys.stderr)
 
         # No internal Terminator
         score = Functions.look_for_terminators(designed_region)
         if score >= 90:  # 90% confidence from transtermHP
             valid = False
-            sys.stderr.write("SolutionValidator: High Terminator score\n")
+            print("SolutionValidator: High Terminator score", file=sys.stderr)
 
         # No restriction enzymes
         if 'ggtctc' in designed_region or 'gagacc' in designed_region:
-            sys.stderr.write("SolutionValidator: Restriction enzyme found\n")
+            print("SolutionValidator: Restriction enzyme found",
+                  file=sys.stderr)
             valid = False
 
         solution.valid = valid

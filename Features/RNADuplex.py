@@ -126,8 +126,7 @@ class RNADuplexMFE(RNADuplex):
     def set_scores(self, scoring_function=Functions.analyze_duplex_mfe):
         self.scores.update(
             Functions.appendLabelToDict(
-                scoring_function(
-                    self.duplexFile),
+                scoring_function(self.duplexFile),
                 self.label))
 
 
