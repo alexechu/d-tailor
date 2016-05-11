@@ -2,11 +2,13 @@
 
 import sys
 
+
 def make_zero_matrix(n):
     A = []
     for i in range(0, n):
         A.append([0] * n)
     return A
+
 
 def dxdy(at, num_bins):
     dx = (max_hp[at] - min_hp[at]) / float(num_bins)
@@ -38,17 +40,18 @@ def set_ranges_from_file(termfile, num_bins):
     # add in a buffer in the range = to the size of 1 bin on the low end
     # and 0.1 on the high end (the later is for numerical problems)
     for at in min_hp:
-        # NOTE: b/c we change the ranges here, this dx dy is only an estimate...
+        # NOTE: b/c we change the ranges here, this dx dy is only an
+        # estimate...
         dx, dy = dxdy(at, num_bins)
-        min_hp[at] -= 1.5*dx
-        min_tail[at] -= 1.5*dy
+        min_hp[at] -= 1.5 * dx
+        min_tail[at] -= 1.5 * dy
         max_hp[at] += 0.1
         max_tail[at] += 0.1
 
     infile.close()
 
 
-def hist2d_from_file(termfile, num_bins): # hp_range, tail_range):
+def hist2d_from_file(termfile, num_bins):  # hp_range, tail_range):
     # compute the bin sizes
     #dx = (hp_range[1] - hp_range[0]) / float(num_bins)
     #dy = (tail_range[1] - tail_range[0]) / float(num_bins)
@@ -69,15 +72,32 @@ def hist2d_from_file(termfile, num_bins): # hp_range, tail_range):
 
         dx, dy = dxdy(at, num_bins)
 
-        i = int((hp - min_hp[at])/dx)
-        j = int((tail - min_tail[at])/dy)
-        
+        i = int((hp - min_hp[at]) / dx)
+        j = int((tail - min_tail[at]) / dy)
+
         if i == 0 or j == 0:
-            print(at, i, j, hp, tail, min_hp[at], min_tail[at], dx, dy, file=sys.stderr)
-        
+            print(
+                at,
+                i,
+                j,
+                hp,
+                tail,
+                min_hp[at],
+                min_tail[at],
+                dx,
+                dy,
+                file=sys.stderr)
+
         if not (0 <= i < num_bins and 0 <= j < num_bins):
-            print("WARNING: out of range values:", i, j, at, hp, tail, file=sys.stderr)
-            print("Ranges=", min_hp[at], max_hp[at], min_tail[at], max_tail[at], file=sys.stderr)
+            print("WARNING: out of range values:", i,
+                  j, at, hp, tail, file=sys.stderr)
+            print(
+                "Ranges=",
+                min_hp[at],
+                max_hp[at],
+                min_tail[at],
+                max_tail[at],
+                file=sys.stderr)
             continue
 
         D[at][i][j] += 1
@@ -87,6 +107,8 @@ def hist2d_from_file(termfile, num_bins): # hp_range, tail_range):
 
 
 warned = {}
+
+
 def warn_if_out_of_range(value, rng, title):
     if value <= rng[0] or value >= rng[1]:
         if title not in warned:
@@ -118,17 +140,19 @@ def main():
     #tail_range = (float(sys.argv[6]), float(sys.argv[7]))
 
     # print the header
-    print(seqlen, num_bins) # hp_range[0], hp_range[1], tail_range[0], tail_range[1]
+    # hp_range[0], hp_range[1], tail_range[0], tail_range[1]
+    print(seqlen, num_bins)
 
     set_ranges_from_file(infile, num_bins)
-    D = hist2d_from_file(infile, num_bins) #, hp_range, tail_range)
+    D = hist2d_from_file(infile, num_bins)  # , hp_range, tail_range)
 
     # for every at value, compute and print the matrix
     for at in sorted(D):
         print(at, min_hp[at], max_hp[at], min_tail[at], max_tail[at])
         print_matrix(D[at])
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    main()
 
 
 def read_random_terms(infile, at):
@@ -136,13 +160,14 @@ def read_random_terms(infile, at):
     to a list of (hp, tail) tuples, and the ranges are pairs giving the (min, max) seen"""
 
     L = []
-    inf=open(infile)
+    inf = open(infile)
     first = True
     for line in inf:
         line = line[:-1]
         at, hp, tail = line.split()
         at, hp, tail = float(at), float(hp), float(tail)
-        if at not in D: D[at] = []
+        if at not in D:
+            D[at] = []
         D[at].append((hp, tail))
 
         # track the global ranges of the hp and tail scores
@@ -153,7 +178,7 @@ def read_random_terms(infile, at):
         else:
             minhp, maxhp = min(minhp, hp), max(maxhp, hp)
             mintail, maxtail = min(mintail, tail), max(maxtail, tail)
-        
+
     inf.close()
     return (D, (minhp, maxhp), (mintail, maxtail))
 
@@ -167,19 +192,18 @@ def hist2d(terms, num_bins, hp_range, tail_range):
 
     # make a num_bins by num_bins zero matrix
     A = []
-    for i in range(0,num_bins):
+    for i in range(0, num_bins):
         A.append([0] * num_bins)
 
     # fill in the matrix
     total = 0
     for i in range(0, num_bins):
         hp_slice = [(hp, tail) for (hp, tail) in terms
-                               if hp >= i * dx + hp_range[0] and hp < (i+1)*dx + hp_range[0]]
+                    if hp >= i * dx + hp_range[0] and hp < (i + 1) * dx + hp_range[0]]
 
         for j in range(0, num_bins):
             A[i][j] = len([1 for (hp, tail) in hp_slice
-                             if tail >= j * dy + tail_range[0] and tail < (j+1)*dy + tail_range[0]])
+                           if tail >= j * dy + tail_range[0] and tail < (j + 1) * dy + tail_range[0]])
             total += A[i][j]
 
     return A
-

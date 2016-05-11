@@ -18,59 +18,75 @@ import sys
 ##
 ######################
 
-# validate a CDS region (i.e. begins with start codon, ends with stop codon, and does not have an in-frame stop codon in the middle of the sequence. 
+# validate a CDS region (i.e. begins with start codon, ends with stop
+# codon, and does not have an in-frame stop codon in the middle of the
+# sequence.
+
+
 def validateCDS(cds=""):
-    #normalize CDS
-    cds = cds.lower().replace('u','t')
-    
-    #cds length is multiple of 3
+    # normalize CDS
+    cds = cds.lower().replace('u', 't')
+
+    # cds length is multiple of 3
     if len(cds) % 3 != 0:
         return False
-    
-    #starts with a start codon (ATG, GTG, TTG)
-    if cds[0:3] not in ('atg','gtg','ttg'):
+
+    # starts with a start codon (ATG, GTG, TTG)
+    if cds[0:3] not in ('atg', 'gtg', 'ttg'):
         return False
-    
-    #stop with a stop codon
-    if cds[-3:] not in ('taa','tag','tga'):
+
+    # stop with a stop codon
+    if cds[-3:] not in ('taa', 'tag', 'tga'):
         return False
-        
-    #stop codon in the middle
-    if len(set([cds[i:i+3] for i in range(3,len(cds)-3,3)]).intersection(['taa','tag','tga'])) != 0:
+
+    # stop codon in the middle
+    if len(set([cds[i:i + 3] for i in range(3, len(cds) - 3, 3)]
+               ).intersection(['taa', 'tag', 'tga'])) != 0:
         return False
-    
+
     return True
-    
+
 # translate codons to aa
+
+
 def translateCDS(sequence):
     aa_seq = ""
-    for i in range(0,len(sequence),3):
-        aa_seq += codon2aa_table[sequence[i:(i+3)]]+" "
-    
+    for i in range(0, len(sequence), 3):
+        aa_seq += codon2aa_table[sequence[i:(i + 3)]] + " "
+
     return aa_seq
-        
+
 
 # return the indices of the array 'array' sorted
 def argsort(array, reverse=False):
-    return sorted(list(range(len(array))), key=array.__getitem__, reverse=reverse)
+    return sorted(list(range(len(array))),
+                  key=array.__getitem__, reverse=reverse)
 
-#return sequence complementary to seq
+# return sequence complementary to seq
+
+
 def complementary(seq):
     return str(seq).translate(string.maketrans("atcg", "tagc"))
 
-#return random nucleotide (different than original)
+# return random nucleotide (different than original)
+
+
 def randomMutation(nucleotide):
     possible_mut = list(set(bases) - set(nucleotide))
-    
-    return choice(possible_mut) 
-    
-# count the number of different characters between str1 and str2 (hamming distance)
+
+    return choice(possible_mut)
+
+# count the number of different characters between str1 and str2 (hamming
+# distance)
+
+
 def diff(str1, str2):
-    nbr=0
+    nbr = 0
     for i in range(len(str1)):
         if str1[i] != str2[i]:
-            nbr+=1
-    return nbr    
+            nbr += 1
+    return nbr
+
 
 def lin(x, y):
     """
@@ -78,8 +94,8 @@ def lin(x, y):
         Linear regression of y = ax + b
     Usage
         real, real, real, real, real = lin(list, list)
-    Returns coefficients to the regression line "y=ax+b" from x[] and y[], 
-            R^2 Value, sum of squares and mean error 
+    Returns coefficients to the regression line "y=ax+b" from x[] and y[],
+            R^2 Value, sum of squares and mean error
     """
     if len(x) != len(y):
         raise ValueError('unequal length')
@@ -88,33 +104,36 @@ def lin(x, y):
     for i, j in zip(x, y):
         sx = sx + i
         sy = sy + j
-        sxx = sxx + i*i
-        syy = syy + j*j
-        sxy = sxy + i*j
+        sxx = sxx + i * i
+        syy = syy + j * j
+        sxy = sxy + i * j
     det = sxx * n - sx * sx
-    a, b  = (sxy * n - sy * sx)/det, (sxx * sy - sx * sxy)/det
-    mean_y = sy/n
+    a, b = (sxy * n - sy * sx) / det, (sxx * sy - sx * sxy) / det
+    mean_y = sy / n
     mean_error = residual = 0.0
     for i, j in zip(x, y):
         mean_error = mean_error + (j - mean_y)**2
-        residual  = residual  + (j - a * i - b)**2
-    r2  = 1 - residual/mean_error
-    ssq = residual / (n-2)
+        residual = residual + (j - a * i - b)**2
+    r2 = 1 - residual / mean_error
+    ssq = residual / (n - 2)
     #var_a, var_b = ss * n / det, ss * Sxx / det
     return a, b, r2, ssq, mean_error
 
-def appendLabelToDict(somedict,label):
-    return dict([(label+str(key_value[0]), key_value[1]) for key_value in list(somedict.items())])
+
+def appendLabelToDict(somedict, label):
+    return dict([(label + str(key_value[0]), key_value[1])
+                 for key_value in list(somedict.items())])
 
 
 def average(array):
-    return sum(array)*1.0/len(array)
+    return sum(array) * 1.0 / len(array)
+
 
 def stddev(array):
-    avg = average(array)    
+    avg = average(array)
     return sqrt(average([(x - avg)**2 for x in array]))
-    
-    
+
+
 ######################
 ##
 #  Scoring Functions
@@ -125,31 +144,41 @@ def structureAnalysis(structure_file, propertyOfInterest="ss"):
     '''
         given a structure file it returns the position that are either single stranded "ss" or double stranded "ds"
     '''
-    
-    if path.exists("tmp/structures/"+structure_file+".ct"):
+
+    if path.exists("tmp/structures/" + structure_file + ".ct"):
         if propertyOfInterest == "ds":
-            output = Popen("perl 3rdParty/unafold/ss-count.pl tmp/structures/" + structure_file + ".ct | awk /[[:digit:]][[:blank:]]0/'{print $1}'", stdout=PIPE, shell=True).stdout.read()
+            output = Popen(
+                "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
+                structure_file +
+                ".ct | awk /[[:digit:]][[:blank:]]0/'{print $1}'",
+                stdout=PIPE,
+                shell=True).stdout.read()
             return [eval(k) for k in output.split()]
         elif propertyOfInterest == "ss":
-            output = Popen("perl 3rdParty/unafold/ss-count.pl tmp/structures/" + structure_file + ".ct | awk /[[:digit:]][[:blank:]]1/'{print $1}'", stdout=PIPE, shell=True).stdout.read()
+            output = Popen(
+                "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
+                structure_file +
+                ".ct | awk /[[:digit:]][[:blank:]]1/'{print $1}'",
+                stdout=PIPE,
+                shell=True).stdout.read()
             return [eval(k) for k in output.split()]
         else:
             return []
 
 
-def analyzeCodons(seq, positions = None, data_table = cai_table):
+def analyzeCodons(seq, positions=None, data_table=cai_table):
     '''
        given a sequence it returns a list with two elements: [ list_of_codons, list_of_codons_cai]
-    '''    
-    
-    if positions == None:
-        positions = list(range(0,len(seq),3))
-    
-    seq = seq.lower();    
+    '''
+
+    if positions is None:
+        positions = list(range(0, len(seq), 3))
+
+    seq = seq.lower()
     codons = []
     codons_cai = []
     for i in positions:
-        codon = seq[i:i+3]        
+        codon = seq[i:i + 3]
         codons.append(codon)
         if codon in data_table:
             codons_cai.append(data_table[codon])
@@ -164,422 +193,554 @@ def get_alternate_codons(codon, data=tai_tuller, dist=0):
         data: dictionary with a map between codons and tAI
         dist: 0   --> only synonymous codon
               1-3 --> only codon with 1-3 nt difference from original
-    """    
+    """
     if dist == 0:
         # return only syn codon
-        return [(syn_cod, data[syn_cod]) for syn_cod in aa2codon_table[codon2aa_table[codon]] if syn_cod != codon]
+        return [(syn_cod, data[syn_cod]) for syn_cod in aa2codon_table[
+            codon2aa_table[codon]] if syn_cod != codon]
     else:
         # return syn codon and codon 1 nt away
-        return [(alt_cod, data[alt_cod]) for alt_cod in codons_list if (alt_cod != codon and diff(codon, alt_cod) <= dist)]
+        return [(alt_cod, data[alt_cod]) for alt_cod in codons_list if (
+            alt_cod != codon and diff(codon, alt_cod) <= dist)]
+
 
 def get_tai(seq, data=tai_tuller):
     seq = seq.lower()
 #    seq = seq.replace("t","u")
-    return [(seq[i:i+3], data[seq[i:i+3]]) for i in range(0,len(seq),3)]
-    
+    return [(seq[i:i + 3], data[seq[i:i + 3]]) for i in range(0, len(seq), 3)]
+
+
 def analyze_tai(seq, window=21, data=tai_tuller, method="harmonic"):
     seq = seq.lower()
 #   seq = seq.replace("t","u")
-    scores   = [data[seq[i:i+3]] for i in range(0,len(seq),3)]
+    scores = [data[seq[i:i + 3]] for i in range(0, len(seq), 3)]
     smoothie = []
     if window > 1:
         if method == "geometric":
-            for i in range(len(scores)-window+1):
+            for i in range(len(scores) - window + 1):
                 smoothie.append(1)
-                for j in range(i,i+window):
+                for j in range(i, i + window):
                     smoothie[-1] *= scores[j]
-                smoothie[-1] = smoothie[-1]**(1/float(window))
+                smoothie[-1] = smoothie[-1]**(1 / float(window))
         if method == "harmonic":
-            for i in range(len(scores)-window+1):
-                smoothie.append(sum([1/v for v in scores[i:i+window]])/window) 
+            for i in range(len(scores) - window + 1):
+                smoothie.append(
+                    sum([1 / v for v in scores[i:i + window]]) / window)
     return scores, smoothie
 
 
 def analyze_hydropathy(seq):
-    seq = seq.lower();
+    seq = seq.lower()
     score = 0
     len_sq = 0
-    for i in range(0,len(seq),3):
-        if seq[i:i+3] in hydropathy_index_table:
-            score += (hydropathy_index_table[seq[i:i+3]])
+    for i in range(0, len(seq), 3):
+        if seq[i:i + 3] in hydropathy_index_table:
+            score += (hydropathy_index_table[seq[i:i + 3]])
             len_sq += 1
     score /= len_sq
     return score
 
+
 def analyze_cai(seq):
-    seq = seq.lower();
+    seq = seq.lower()
     score = 0
     len_sq = 0
-    for i in range(0,len(seq),3):
-        if seq[i:i+3] in cai_table:
-            score += log(cai_table[seq[i:i+3]])
+    for i in range(0, len(seq), 3):
+        if seq[i:i + 3] in cai_table:
+            score += log(cai_table[seq[i:i + 3]])
             len_sq += 1
     score /= len_sq
     return exp(score)
 
-def analyze_bottleneck(sequence, window=20, data=tai_tuller, method="harmonic"):
+
+def analyze_bottleneck(sequence, window=20,
+                       data=tai_tuller, method="harmonic"):
     score, smooth = analyze_tai(sequence, window, data=data, method=method)
-    
+
     return [score, smooth]
 
+
 def analyze_bottleneck_pos(sequence, score, smooth):
-    return smooth.index(max(smooth))+1
+    return smooth.index(max(smooth)) + 1
+
 
 def analyze_bottleneck_abs_strength(sequence, score, smooth):
     return max(smooth)
 
+
 def analyze_bottleneck_rel_strength(sequence, score, smooth):
-    return (len(score)*max(smooth)/sum([1/v for v in score]))
+    return (len(score) * max(smooth) / sum([1 / v for v in score]))
+
 
 def analyze_ntcontent(seq):
-    
+
     seq = seq.replace('u', 't')
-    nuc_freq = { 'NucleotideContentAT': 0, 
-                 'NucleotideContentGC': 0, 
-                 'NucleotideContentA' : 0, 
-                 'NucleotideContentT' : 0, 
-                 'NucleotideContentG' : 0, 
-                 'NucleotideContentC' : 0}
-    
-    for i in range (len(seq)):
-        nuc_freq['NucleotideContent'+seq[i].upper()] += 1
-    
+    nuc_freq = {'NucleotideContentAT': 0,
+                'NucleotideContentGC': 0,
+                'NucleotideContentA': 0,
+                'NucleotideContentT': 0,
+                'NucleotideContentG': 0,
+                'NucleotideContentC': 0}
+
+    for i in range(len(seq)):
+        nuc_freq['NucleotideContent' + seq[i].upper()] += 1
+
     nuc_freq['NucleotideContentA'] /= float(seq.__len__())
     nuc_freq['NucleotideContentT'] /= float(seq.__len__())
     nuc_freq['NucleotideContentG'] /= float(seq.__len__())
-    nuc_freq['NucleotideContentC'] /= float(seq.__len__())    
-    nuc_freq['NucleotideContentAT'] = (nuc_freq['NucleotideContentA']+nuc_freq['NucleotideContentT'])
-    nuc_freq['NucleotideContentGC'] = (nuc_freq['NucleotideContentG']+nuc_freq['NucleotideContentC'])    
-    
-    return  nuc_freq
+    nuc_freq['NucleotideContentC'] /= float(seq.__len__())
+    nuc_freq['NucleotideContentAT'] = (
+        nuc_freq['NucleotideContentA'] +
+        nuc_freq['NucleotideContentT'])
+    nuc_freq['NucleotideContentGC'] = (
+        nuc_freq['NucleotideContentG'] +
+        nuc_freq['NucleotideContentC'])
+
+    return nuc_freq
+
 
 def analyze_pwm_score(seq, pwm):
-    #print seq
+    # print seq
     max_score = -99
-    max_pos   = 0 
-    
+    max_pos = 0
+
     pwm_length = len(pwm[list(pwm.keys())[0]])
-    
-    for pos in range(0,len(seq)-pwm_length+1):
-        tmp_score = pwm_score(seq[pos:(pos+pwm_length)], pwm)
-        
+
+    for pos in range(0, len(seq) - pwm_length + 1):
+        tmp_score = pwm_score(seq[pos:(pos + pwm_length)], pwm)
+
         if tmp_score > max_score:
             max_score = tmp_score
             max_pos = pos
-            
-    return { 'PWMScore' : max_score , 'PWMScorePosition' : max_pos }
-        
-def pwm_score(seq,pwm):
-    score=0    
-    for i in range(0,len(seq)):
+
+    return {'PWMScore': max_score, 'PWMScorePosition': max_pos}
+
+
+def pwm_score(seq, pwm):
+    score = 0
+    for i in range(0, len(seq)):
         score += pwm[seq[i]][i]
-    return  (score)
+    return (score)
 
 
 def analyze_terminator(seq):
-    #use transtermHP
-    #create input files
-    file1 = 'test' + str(randint(0000,1000)) + '.fa';
-    file2 = 'test' + str(randint(0000,1000)) + '-fake.coords';
-    
-    system("echo '>seq1\n" + str(seq) + "' > tmp/transterm_files/"+file1)
-    system("echo 'fakegene1    1 2    seq1\nfakegene1    " + str(len(seq)-1) + " " + str(len(seq)) +"    seq1' > tmp/transterm_files/"+file2)
-    #run transtermhp
-    output = Popen("./3rdParty/transterm/transterm -p 3rdParty/transterm/expterm.dat tmp/transterm_files/"+file1+" tmp/transterm_files/"+file2+" 2> tmp/transterm_files/err.txt | awk /TERM/'{print $8}'", stdout=PIPE, stderr=None, shell=True).stdout.read()
+    # use transtermHP
+    # create input files
+    file1 = 'test' + str(randint(0000, 1000)) + '.fa'
+    file2 = 'test' + str(randint(0000, 1000)) + '-fake.coords'
+
+    system("echo '>seq1\n" + str(seq) + "' > tmp/transterm_files/" + file1)
+    system("echo 'fakegene1    1 2    seq1\nfakegene1    " + str(len(seq) -
+                                                                 1) + " " + str(len(seq)) + "    seq1' > tmp/transterm_files/" + file2)
+    # run transtermhp
+    output = Popen(
+        "./3rdParty/transterm/transterm -p 3rdParty/transterm/expterm.dat tmp/transterm_files/" +
+        file1 +
+        " tmp/transterm_files/" +
+        file2 +
+        " 2> tmp/transterm_files/err.txt | awk /TERM/'{print $8}'",
+        stdout=PIPE,
+        stderr=None,
+        shell=True).stdout.read()
 
     if output == '':
         return 'No'
     else:
-        #print "Terminator output: " + output
+        # print "Terminator output: " + output
         all_term_scores = [float(score) for score in output.split()]
         if max(all_term_scores) > 90:
             return 'Yes'
         elif max(all_term_scores) > 70:
             return 'Maybe'
         else:
-            return 'No'               
+            return 'No'
 
 
-def analyze_duplex_structure(seq1,seq2,filename):
-        
-     
+def analyze_duplex_structure(seq1, seq2, filename):
+
     chdir(project_dir)
-    
+
     structure_pairs = {}
     data = {}
-        
-    r = randint(4,1000)
-    
+
+    r = randint(4, 1000)
+
     s1_file = str(r) + "s1.seq"
     s2_file = str(r) + "s2.seq"
 
     system("echo '" + str(seq1) + "' > " + s1_file)
-    system("echo '" + str(seq2) + "' > " + s2_file)        
-    fnull = open(devnull, 'w')   #this line is necessary to omit output generated by UNAFOLD         
-    call("./3rdParty/unafold/hybrid-min -n RNA -o "+filename+" "+ s1_file + " " + s2_file + " -t 37 -T 37", shell = True, stdout = fnull, stderr = fnull)     #code is necessary to omit output generated by UNAFOLD    
-    
-    if path.exists(project_dir+"/"+filename+".ct"):
+    system("echo '" + str(seq2) + "' > " + s2_file)
+    # this line is necessary to omit output generated by UNAFOLD
+    fnull = open(devnull, 'w')
+    call(
+        "./3rdParty/unafold/hybrid-min -n RNA -o " +
+        filename +
+        " " +
+        s1_file +
+        " " +
+        s2_file +
+        " -t 37 -T 37",
+        shell=True,
+        stdout=fnull,
+        stderr=fnull)  # code is necessary to omit output generated by UNAFOLD
+
+    if path.exists(project_dir + "/" + filename + ".ct"):
         system("mv %s*.ct tmp/structures/" % filename)
         system("mv %s*.asc tmp/structures/" % filename)
-        
-        output_ds = Popen("cat tmp/structures/" + filename + ".ct | awk '{print $1 , $5}'", stdout=PIPE, shell=True).stdout.read()
+
+        output_ds = Popen(
+            "cat tmp/structures/" +
+            filename +
+            ".ct | awk '{print $1 , $5}'",
+            stdout=PIPE,
+            shell=True).stdout.read()
         list_of_pairs = output_ds.split('\n')[1:-1]
-        
+
         for pair_str in list_of_pairs:
-            pair = pair_str.split()        
+            pair = pair_str.split()
             structure_pairs[pair[0]] = pair[1]
-                
+
     data['RNADuplexPairs'] = structure_pairs
     system("rm %s*" % filename)
     system("rm %s*.*" % r)
     fnull.close()
-    
-    return data 
 
-def analyze_duplex_mfe(filename,region = None):
+    return data
+
+
+def analyze_duplex_mfe(filename, region=None):
     data = {}
-         
+
     chdir(project_dir)
-    
-    if region == None:
-        if path.exists(project_dir+"/tmp/structures/"+filename+".ct"):
+
+    if region is None:
+        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
             try:
-                res = check_output(["./3rdParty/unafold/ct-energy" , "tmp/structures/" + filename + ".ct"])
-                
+                res = check_output(
+                    ["./3rdParty/unafold/ct-energy", "tmp/structures/" + filename + ".ct"])
+
                 if res != "":
                     data['RNADuplexMFE'] = float(str(res).rstrip())
                 else:
                     data['RNADuplexMFE'] = 'NA'
-                    
+
             except NameError:
                 data['RNADuplexMFE'] = 'NA'
 
             #system("rm tmp/structures/%s*" % filename)
         else:
             data['RNADuplexMFE'] = 'NA'
-            
-    #else:
+
+    # else:
     # TODO: get just dG from one region of the rna structure
-        
+
     return data
 
-def analyze_duplex_ds(filename,seq1 = "", region = None):
-    data = {}   
-    
+
+def analyze_duplex_ds(filename, seq1="", region=None):
+    data = {}
+
     chdir(project_dir)
-    
-    if region == None:
-        if path.exists(project_dir+"/tmp/structures/"+filename+".ct"):            
-            output_ds = Popen("perl 3rdParty/unafold/ss-count.pl tmp/structures/" + filename + ".ct | awk /[[:digit:]][[:blank:]]0/'{print $1}'", stdout=PIPE, shell=True).stdout.read()
+
+    if region is None:
+        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
+            output_ds = Popen(
+                "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
+                filename +
+                ".ct | awk /[[:digit:]][[:blank:]]0/'{print $1}'",
+                stdout=PIPE,
+                shell=True).stdout.read()
             output = output_ds.split()
-            data['RNADuplexDoubleStrandedBasesList_Mol1'] = [eval(k) for k in output if eval(k) <= len(seq1)]
-            data['RNADuplexDoubleStrandedBases_Mol1'] = len(data['RNADuplexDoubleStrandedBasesList_Mol1'])
-            data['RNADuplexDoubleStrandedBasesList_Mol2'] = [eval(k)-len(seq1) for k in output if eval(k) > len(seq1)]
-            data['RNADuplexDoubleStrandedBases_Mol2'] = len(data['RNADuplexDoubleStrandedBasesList_Mol2'])
+            data['RNADuplexDoubleStrandedBasesList_Mol1'] = [
+                eval(k) for k in output if eval(k) <= len(seq1)]
+            data['RNADuplexDoubleStrandedBases_Mol1'] = len(
+                data['RNADuplexDoubleStrandedBasesList_Mol1'])
+            data['RNADuplexDoubleStrandedBasesList_Mol2'] = [
+                eval(k) - len(seq1) for k in output if eval(k) > len(seq1)]
+            data['RNADuplexDoubleStrandedBases_Mol2'] = len(
+                data['RNADuplexDoubleStrandedBasesList_Mol2'])
         else:
             data['RNADuplexDoubleStrandedBasesList_Mol1'] = 'NA'
             data['RNADuplexDoubleStrandedBases_Mol1'] = 'NA'
             data['RNADuplexDoubleStrandedBasesList_Mol2'] = 'NA'
             data['RNADuplexDoubleStrandedBases_Mol2'] = 'NA'
 
-    #else:
+    # else:
     # TODO: get just DS bases from one region of the rna structure
-        
+
     return data
 
-def analyze_duplex_ss(filename,seq1 = "",region = None):
-    data = {}       
-      
+
+def analyze_duplex_ss(filename, seq1="", region=None):
+    data = {}
+
     chdir(project_dir)
-    
-    if region == None:
-        if path.exists(project_dir+"/tmp/structures/"+filename+".ct"):
-            output_ss = Popen("perl 3rdParty/unafold/ss-count.pl tmp/structures/" + filename + ".ct | awk /[[:digit:]][[:blank:]]1/'{print $1}'", stdout=PIPE, shell=True).stdout.read()                    
+
+    if region is None:
+        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
+            output_ss = Popen(
+                "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
+                filename +
+                ".ct | awk /[[:digit:]][[:blank:]]1/'{print $1}'",
+                stdout=PIPE,
+                shell=True).stdout.read()
             output = output_ss.split()
-            data['RNADuplexSingleStrandedBasesList_Mol1'] = [eval(k) for k in output if eval(k) <= len(seq1)]
-            data['RNADuplexSingleStrandedBases_Mol1'] = len(data['RNADuplexDoubleStrandedBasesList_Mol1'])
-            data['RNADuplexSingleStrandedBasesList_Mol2'] = [eval(k)-len(seq1) for k in output if eval(k) > len(seq1)]
-            data['RNADuplexSingleStrandedBases_Mol2'] = len(data['RNADuplexDoubleStrandedBasesList_Mol2'])
+            data['RNADuplexSingleStrandedBasesList_Mol1'] = [
+                eval(k) for k in output if eval(k) <= len(seq1)]
+            data['RNADuplexSingleStrandedBases_Mol1'] = len(
+                data['RNADuplexDoubleStrandedBasesList_Mol1'])
+            data['RNADuplexSingleStrandedBasesList_Mol2'] = [
+                eval(k) - len(seq1) for k in output if eval(k) > len(seq1)]
+            data['RNADuplexSingleStrandedBases_Mol2'] = len(
+                data['RNADuplexDoubleStrandedBasesList_Mol2'])
         else:
             data['RNADuplexSingleStrandedBasesList_Mol1'] = 'NA'
             data['RNADuplexSingleStrandedBases_Mol1'] = 'NA'
             data['RNADuplexSingleStrandedBasesList_Mol2'] = 'NA'
-            data['RNADuplexSingleStrandedBases_Mol2'] = 'NA'    #else:
+            data['RNADuplexSingleStrandedBases_Mol2'] = 'NA'  # else:
     # TODO: get just DS bases from one region of the rna structure
-        
+
     return data
 
 
-def analyze_structure_prob(seq,filename,window=50,region=[]):
-    
-    
+def analyze_structure_prob(seq, filename, window=50, region=[]):
+
     chdir(project_dir)
-    
+
     structure_pairs = {}
     data = {}
 
-    system("echo '>" + filename + "\n" + str(seq) + "' > " + filename + ".fa")        
-    fnull = open(devnull, 'w')   #this line is necessary to omit output generated by UNAFOLD         
-    call("3rdParty/vienna/RNAplfold -d2 -noLP -W "+str(window)+" -u 1 < " + filename + ".fa", shell = True, stdout = fnull, stderr = fnull)     #code is necessary to omit output generated by RNAplfold
+    system("echo '>" + filename + "\n" + str(seq) + "' > " + filename + ".fa")
+    # this line is necessary to omit output generated by UNAFOLD
+    fnull = open(devnull, 'w')
+    call(
+        "3rdParty/vienna/RNAplfold -d2 -noLP -W " +
+        str(window) +
+        " -u 1 < " +
+        filename +
+        ".fa",
+        shell=True,
+        stdout=fnull,
+        stderr=fnull)  # code is necessary to omit output generated by RNAplfold
 
-    output_ss = Popen("cat " + filename + "_lunp | awk '{print $1 \"\t\" $2}'", stdout=PIPE, shell=True).stdout.read()
-    l = output_ss.rstrip().split('\n')[2:]    
-    
+    output_ss = Popen(
+        "cat " +
+        filename +
+        "_lunp | awk '{print $1 \"\t\" $2}'",
+        stdout=PIPE,
+        shell=True).stdout.read()
+    l = output_ss.rstrip().split('\n')[2:]
+
     for p in l:
         pair = p.split()
         if pair[1] != 'NA':
-            structure_pairs[pair[0]]=float(pair[1])
+            structure_pairs[pair[0]] = float(pair[1])
         else:
-            structure_pairs[pair[0]]='NA'
-    
+            structure_pairs[pair[0]] = 'NA'
+
     if region != []:
         reg_avg = 0
         for pos in region:
             reg_avg += structure_pairs[str(pos)]
-        reg_avg = reg_avg/len(region)
-        data['StructureProb'] = reg_avg        
+        reg_avg = reg_avg / len(region)
+        data['StructureProb'] = reg_avg
     else:
-        data['StructureProb'] = sum(structure_pairs.values())/len(list(structure_pairs.keys()))
-        
-    data['StructureProbList'] = structure_pairs 
-        
+        data['StructureProb'] = sum(
+            structure_pairs.values()) / len(list(structure_pairs.keys()))
+
+    data['StructureProbList'] = structure_pairs
+
     # remove tmp files
     system("rm %s*" % filename)
     #system("mv " + filename + "* tmp/unafold_files/")
-    fnull.close()             
- 
+    fnull.close()
+
     return data
 
-def analyze_ensemble(seq,filename,sample_size=100):
-    
+
+def analyze_ensemble(seq, filename, sample_size=100):
+
     chdir(project_dir)
 
-    system("echo '>" + filename + "\n" + str(seq) + "' > " + filename + ".fa")                 
+    system("echo '>" + filename + "\n" + str(seq) + "' > " + filename + ".fa")
 
-    output_ss = Popen("./3rdParty/vienna/RNAsubopt -d2 -noLP -s -p "+str(sample_size)+" < " + filename + ".fa | tail -n "+str(sample_size), stdout=PIPE, shell=True).stdout.read()
-        
+    output_ss = Popen(
+        "./3rdParty/vienna/RNAsubopt -d2 -noLP -s -p " +
+        str(sample_size) +
+        " < " +
+        filename +
+        ".fa | tail -n " +
+        str(sample_size),
+        stdout=PIPE,
+        shell=True).stdout.read()
+
     l = output_ss.rstrip().split('\n')
     ens_st = []
-    
+
     string_aux = ""
-    
+
     for st in l:
         string_aux += str(seq) + "\n" + str(st) + "\n"
-        
+
     system("echo '" + str(string_aux) + "' > " + filename + ".st")
-    output_ss = Popen("./3rdParty/vienna/RNAeval -d2 < " + filename + ".st | perl -lne 'm/.* \((.*)\)$// print $1'", stdout=PIPE, shell=True).stdout.read().rstrip()
+    output_ss = Popen(
+        "./3rdParty/vienna/RNAeval -d2 < " +
+        filename +
+        ".st | perl -lne 'm/.* \((.*)\)$// print $1'",
+        stdout=PIPE,
+        shell=True).stdout.read().rstrip()
     ens_st = [float(x) for x in output_ss.rstrip().split('\n')[2:]]
 
     data = {}
     data['StructureEnsembleSample'] = ens_st
     data['StructureEnsembleSampleMean'] = average(ens_st)
     data['StructureEnsembleSampleSD'] = stddev(ens_st)
-    
+
     system("rm %s*" % filename)
-    
+
     # remove tmp files
     #system("rm %s*" % filename)
-    #system("mv " + filename + "* tmp/unafold_files/")             
- 
+    #system("mv " + filename + "* tmp/unafold_files/")
+
     return data
 
-def analyze_structure(seq,filename,ensemble=False):
-    
-        
+
+def analyze_structure(seq, filename, ensemble=False):
+
     chdir(project_dir)
 
-    system("echo '" + str(seq) + "' > " + filename + ".seq")        
-    fnull = open(devnull, 'w')   #this line is necessary to omit output generated by UNAFOLD
-    if ensemble:         
-        call("./3rdParty/unafold/UNAFold.pl -n RNA " + filename + ".seq", shell = True, stdout = fnull, stderr = fnull)     #code is necessary to omit output generated by UNAFOLD
+    system("echo '" + str(seq) + "' > " + filename + ".seq")
+    # this line is necessary to omit output generated by UNAFOLD
+    fnull = open(devnull, 'w')
+    if ensemble:
+        call(
+            "./3rdParty/unafold/UNAFold.pl -n RNA " +
+            filename +
+            ".seq",
+            shell=True,
+            stdout=fnull,
+            stderr=fnull)  # code is necessary to omit output generated by UNAFOLD
     else:
-        call("./3rdParty/unafold/hybrid-ss-min -n RNA " + filename + ".seq", shell = True, stdout = fnull, stderr = fnull)     #code is necessary to omit output generated by UNAFOLD
-                
-    if os.path.isfile(filename):        
+        call(
+            "./3rdParty/unafold/hybrid-ss-min -n RNA " +
+            filename +
+            ".seq",
+            shell=True,
+            stdout=fnull,
+            stderr=fnull)  # code is necessary to omit output generated by UNAFOLD
+
+    if os.path.isfile(filename):
         system("mv %s*.ct tmp/structures/" % filename)
         # remove tmp files
-    
+
     system("rm %s*" % filename)
     #system("mv " + filename + "* tmp/unafold_files/")
-    fnull.close()             
- 
+    fnull.close()
+
     return 1
 
-def analyze_structure_mfe(filename,region = None):
+
+def analyze_structure_mfe(filename, region=None):
     data = {}
-         
+
     chdir(project_dir)
-    
-    if region == None:
-        if path.exists(project_dir+"/tmp/structures/"+filename+".ct"):
-            
-            output = check_output(["./3rdParty/unafold/ct-energy" , "tmp/structures/" + filename + ".ct"]).rstrip()
+
+    if region is None:
+        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
+
+            output = check_output(
+                ["./3rdParty/unafold/ct-energy", "tmp/structures/" + filename + ".ct"]).rstrip()
             mfe_list = [float(a) for a in output.split('\n')]
-            
+
             data['StructureMFE'] = mfe_list[0]
         else:
             data['StructureMFE'] = 0
-    #else:
+    # else:
     # TODO: get just dG from one region of the rna structure
-        
+
     return data
 
-def analyze_structure_ds(filename,region = None):
-    data = {}   
-    
+
+def analyze_structure_ds(filename, region=None):
+    data = {}
+
     chdir(project_dir)
-    
-    if region == None:
-        if path.exists(project_dir+"/tmp/structures/"+filename+".ct"):
-            output_ds = Popen("perl 3rdParty/unafold/ss-count.pl tmp/structures/" + filename + ".ct | awk /[[:digit:]][[:blank:]]0/'{print $1}'", stdout=PIPE, shell=True).stdout.read()            
-            data['StructureDoubleStrandedList'] = [eval(k) for k in output_ds.split()]
-            data['StructureDoubleStranded'] = len(data['StructureDoubleStrandedBasesList'])
+
+    if region is None:
+        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
+            output_ds = Popen(
+                "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
+                filename +
+                ".ct | awk /[[:digit:]][[:blank:]]0/'{print $1}'",
+                stdout=PIPE,
+                shell=True).stdout.read()
+            data['StructureDoubleStrandedList'] = [
+                eval(k) for k in output_ds.split()]
+            data['StructureDoubleStranded'] = len(
+                data['StructureDoubleStrandedBasesList'])
         else:
             data['StructureDoubleStrandedList'] = 'NA'
             data['StructureDoubleStranded'] = 'NA'
-    #else:
+    # else:
     # TODO: get just DS bases from one region of the rna structure
-        
+
     return data
 
-def analyze_structure_ss(filename,region = None):
-    data = {}       
-      
+
+def analyze_structure_ss(filename, region=None):
+    data = {}
+
     chdir(project_dir)
-    
-    if region == None:
-        if path.exists(project_dir+"/tmp/structures/"+filename+".ct"):
-            output_ss = Popen("perl 3rdParty/unafold/ss-count.pl tmp/structures/" + filename + ".ct | awk /[[:digit:]][[:blank:]]1/'{print $1}'", stdout=PIPE, shell=True).stdout.read()                    
-            data['StructureSingleStrandedList'] = [eval(k) for k in output_ss.split()]
-            data['StructureSingleStranded'] = len(data['StructureSingleStrandedBasesList'])
+
+    if region is None:
+        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
+            output_ss = Popen(
+                "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
+                filename +
+                ".ct | awk /[[:digit:]][[:blank:]]1/'{print $1}'",
+                stdout=PIPE,
+                shell=True).stdout.read()
+            data['StructureSingleStrandedList'] = [
+                eval(k) for k in output_ss.split()]
+            data['StructureSingleStranded'] = len(
+                data['StructureSingleStrandedBasesList'])
         else:
             data['StructureSingleStrandedList'] = 'NA'
             data['StructureSingleStranded'] = 'NA'
-    #else:
+    # else:
     # TODO: get just DS bases from one region of the rna structure
-        
+
     return data
 
-def analyze_structure_accessibility(filename,region = None):
-    data = {}       
-       
+
+def analyze_structure_accessibility(filename, region=None):
+    data = {}
+
     chdir(project_dir)
-    
-    if region == None:
-        if path.exists(project_dir+"/tmp/structures/"+filename+".ct"):
+
+    if region is None:
+        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
             #output = Popen("perl 3rdParty/unafold/ss-count.pl -w tmp/structures/" + filename + ".ct | awk '{sum +=  $2; count += 1}  END{print sum/count}'", stdout=PIPE, shell=True).stdout.read()
-            #data['StructureAccessibility'] = eval(output)                    
-            output = Popen("perl 3rdParty/unafold/ss-count.pl -w tmp/structures/" + filename + ".ct | awk '{print $2}'", stdout=PIPE, shell=True).stdout.read()            
-            data['StructureEnsembleAccessibilityBasesList'] = [eval(e) for e in output.split('\n') if e != '']
-            data['StructureEnsembleAccessibility'] = sum(data['StructureEnsembleAccessibilityBasesList'])/len(data['StructureEnsembleAccessibilityBasesList'])
+            #data['StructureAccessibility'] = eval(output)
+            output = Popen(
+                "perl 3rdParty/unafold/ss-count.pl -w tmp/structures/" +
+                filename +
+                ".ct | awk '{print $2}'",
+                stdout=PIPE,
+                shell=True).stdout.read()
+            data['StructureEnsembleAccessibilityBasesList'] = [
+                eval(e) for e in output.split('\n') if e != '']
+            data['StructureEnsembleAccessibility'] = sum(
+                data['StructureEnsembleAccessibilityBasesList']) / len(
+                data['StructureEnsembleAccessibilityBasesList'])
         else:
             data['StructureEnsembleAccessibility'] = 'NA'
 
-    #else:
+    # else:
     # TODO: get just DS bases from one region of the rna structure
-        
+
     return data
-                  
+
 
 ######################
 ##
@@ -588,72 +749,101 @@ def analyze_structure_accessibility(filename,region = None):
 ######################
 
 
-def SimpleStructureOperator(sequence, structurefile, structure_range, mutable_region, cds_region, direction, keep_aa = True, ss_bases=None, ds_bases=None):
+def SimpleStructureOperator(sequence, structurefile, structure_range, mutable_region,
+                            cds_region, direction, keep_aa=True, ss_bases=None, ds_bases=None):
     '''
         Operator that given a sequence and structure, mutates the sequence to change structure
             seq: sequence in structure
             structure_file: a file containing the structure correspondent to sequence
-            structure_range - start and end position to calculate structure - a tuple in the form (start, end)  
+            structure_range - start and end position to calculate structure - a tuple in the form (start, end)
             mutable_region - a list with all bases that can be mutated
-            cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]            
-            direction: either increase ('+') or decrease ('-') single bases 
-    ''' 
-    
-    if not mutable_region: #it's not possible to mutate
+            cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]
+            direction: either increase ('+') or decrease ('-') single bases
+    '''
+
+    if not mutable_region:  # it's not possible to mutate
         return None
-    
-    if ss_bases == None:
+
+    if ss_bases is None:
         ss_bases = structureAnalysis(structurefile, "ss")
-    
-    if ds_bases == None:
+
+    if ds_bases is None:
         ds_bases = structureAnalysis(structurefile, "ds")
-    
-    if direction == '+':       
-        #get double stranded bases    
-        baseToMutate = [(b+structure_range[0]-1) for b in ds_bases if (b+structure_range[0]-1) in mutable_region]
+
+    if direction == '+':
+        # get double stranded bases
+        baseToMutate = [
+            (b +
+             structure_range[0] -
+             1) for b in ds_bases if (
+                b +
+                structure_range[0] -
+                1) in mutable_region]
     elif direction == '-':
-        #get single stranded bases
-        baseToMutate = [(b+structure_range[0]-1) for b in ss_bases if (b+structure_range[0]-1) in mutable_region]
+        # get single stranded bases
+        baseToMutate = [
+            (b +
+             structure_range[0] -
+             1) for b in ss_bases if (
+                b +
+                structure_range[0] -
+                1) in mutable_region]
     else:
         sys.stderr.write("Direction Unknown")
 
     mutated = False
     iteration = 0
-    
-    while not mutated and iteration <= 100:         
-        #position to mutate
-        index_to_mutate = baseToMutate.pop(randint(0,len(baseToMutate)-1)) if len(baseToMutate) != 0 else mutable_region.pop(randint(0,len(mutable_region)-1))
-                    
-        #mutate base
-        if keep_aa == True and index_to_mutate >= cds_region[0] and index_to_mutate <= cds_region[1]:
-            codon_p = (index_to_mutate-cds_region[0])/3
-            initial_codon = sequence[(cds_region[0]+codon_p*3):(cds_region[0]+codon_p*3+3)]
-            #codon position
-            p1 = (cds_region[0]+codon_p*3)
-            p2 = (cds_region[0]+codon_p*3+1)
-            p3 = (cds_region[0]+codon_p*3+2)         
-            alt_codons = ([c for c in aa2codon_table[codon2aa_table[initial_codon]] if c!= initial_codon])
-            
+
+    while not mutated and iteration <= 100:
+        # position to mutate
+        index_to_mutate = baseToMutate.pop(
+            randint(
+                0,
+                len(baseToMutate) -
+                1)) if len(baseToMutate) != 0 else mutable_region.pop(
+            randint(
+                0,
+                len(mutable_region) -
+                1))
+
+        # mutate base
+        if keep_aa == True and index_to_mutate >= cds_region[
+                0] and index_to_mutate <= cds_region[1]:
+            codon_p = (index_to_mutate - cds_region[0]) / 3
+            initial_codon = sequence[
+                (cds_region[0] + codon_p * 3):(cds_region[0] + codon_p * 3 + 3)]
+            # codon position
+            p1 = (cds_region[0] + codon_p * 3)
+            p2 = (cds_region[0] + codon_p * 3 + 1)
+            p3 = (cds_region[0] + codon_p * 3 + 2)
+            alt_codons = ([c for c in aa2codon_table[codon2aa_table[
+                          initial_codon]] if c != initial_codon])
+
             while len(alt_codons) != 0:
-                rnd_alt_codon = alt_codons.pop(randint(0,len(alt_codons)-1))
-                
-                valid = True 
-                if initial_codon[0] != rnd_alt_codon[0] and not(p1 in mutable_region):
+                rnd_alt_codon = alt_codons.pop(randint(0, len(alt_codons) - 1))
+
+                valid = True
+                if initial_codon[0] != rnd_alt_codon[
+                        0] and not(p1 in mutable_region):
                     valid = False
-                if initial_codon[1] != rnd_alt_codon[1] and not(p2 in mutable_region):
+                if initial_codon[1] != rnd_alt_codon[
+                        1] and not(p2 in mutable_region):
                     valid = False
-                if initial_codon[2] != rnd_alt_codon[2] and not(p3 in mutable_region):
-                    valid = False    
-                
+                if initial_codon[2] != rnd_alt_codon[
+                        2] and not(p3 in mutable_region):
+                    valid = False
+
                 if valid == True:
-                    mutated = True 
-                    new_seq = sequence[:(cds_region[0]+codon_p*3)] + rnd_alt_codon + sequence[(cds_region[0]+codon_p*3+3):]
-                    #print "------"
-                    #print initial_codon
-                    #print rnd_alt_codon
-                    #print sequence
-                    #print new_seq
-            
+                    mutated = True
+                    new_seq = sequence[:(cds_region[0] + codon_p * 3)] + \
+                        rnd_alt_codon + \
+                        sequence[(cds_region[0] + codon_p * 3 + 3):]
+                    # print "------"
+                    # print initial_codon
+                    # print rnd_alt_codon
+                    # print sequence
+                    # print new_seq
+
         else:
             mutated = True
             new_seq = list(sequence)
@@ -662,12 +852,13 @@ def SimpleStructureOperator(sequence, structurefile, structure_range, mutable_re
             else:
                 comp = randomMutation(sequence[index_to_mutate])
             new_seq[index_to_mutate] = comp
-            #print sequence
-            #print "".join(new_seq)     
-            
-        iteration+=1                
-                
+            # print sequence
+            # print "".join(new_seq)
+
+        iteration += 1
+
     return "".join(new_seq)
+
 
 def SimpleBneckOperator(seq, direction="", distance=0):
     """
@@ -680,191 +871,232 @@ def SimpleBneckOperator(seq, direction="", distance=0):
     distance: 0   --> only synonymous codon
               1-3 --> only codon with 1-3 nt difference from original
     """
-    #print "dist: " , str(distance)
+    # print "dist: " , str(distance)
     if direction == "":
-        return None    
-          
+        return None
+
     iteration = 0
     tai = get_tai(seq)
-    alt_codons= []
+    alt_codons = []
 
-    while len(alt_codons)==0 and iteration != 100:
+    while len(alt_codons) == 0 and iteration != 100:
         iteration += 1
-        codonPosition2replace = randint(0,len(tai)-1)
-        alt_codons = get_alternate_codons(tai[codonPosition2replace][0], dist=distance)
-        
-        #print "attempt to replace: " + str(codonPosition2replace) + "-" + str(tai[codonPosition2replace])
-        
-        if direction == "+":
-            # randomly pick lower tai for the alternate solution given allowable distance
-            alt_codons = [alt_cod for alt_cod in alt_codons if alt_cod[1] < tai[codonPosition2replace][1]]
-        elif direction == "-":
-            # randomly pick higher tai for the alternate solution given allowable distance
-            alt_codons = [alt_cod for alt_cod in alt_codons if alt_cod[1] > tai[codonPosition2replace][1]]
-            
-        if len(alt_codons) != 0:
-            randomAltCodon = randint(0,len(alt_codons)-1)
-            #print "Bot operator: old codon -> " + str(tai[codonPosition2replace][0]) 
-            #print "Bot operator: new codon -> " + str(alt_codons[randomAltCodon][0])
+        codonPosition2replace = randint(0, len(tai) - 1)
+        alt_codons = get_alternate_codons(
+            tai[codonPosition2replace][0], dist=distance)
 
-    
+        # print "attempt to replace: " + str(codonPosition2replace) + "-" +
+        # str(tai[codonPosition2replace])
+
+        if direction == "+":
+            # randomly pick lower tai for the alternate solution given
+            # allowable distance
+            alt_codons = [alt_cod for alt_cod in alt_codons if alt_cod[
+                1] < tai[codonPosition2replace][1]]
+        elif direction == "-":
+            # randomly pick higher tai for the alternate solution given
+            # allowable distance
+            alt_codons = [alt_cod for alt_cod in alt_codons if alt_cod[
+                1] > tai[codonPosition2replace][1]]
+
+        if len(alt_codons) != 0:
+            randomAltCodon = randint(0, len(alt_codons) - 1)
+            # print "Bot operator: old codon -> " + str(tai[codonPosition2replace][0])
+            # print "Bot operator: new codon -> " +
+            # str(alt_codons[randomAltCodon][0])
+
     if iteration == 100:
         return None
-    
-    return seq[:3*codonPosition2replace]+alt_codons[randomAltCodon][0]+seq[3*(codonPosition2replace+1):]
 
-def SimpleNtContentOperator(seq, direction=0, nucleotide = [], mutable_region = None, cds_region = (0,9), keep_aa=True):
+    return seq[:3 * codonPosition2replace] + \
+        alt_codons[randomAltCodon][0] + seq[3 * (codonPosition2replace + 1):]
+
+
+def SimpleNtContentOperator(seq, direction=0, nucleotide=[
+], mutable_region=None, cds_region=(0, 9), keep_aa=True):
     if direction == 0:
         return seq
-        
-    mutated = False    
-    seq = seq.lower() 
-    
-    #check direction to decide possible mutations
-    if direction == '-':
-        #select mutable position based on presence of nucleotide(s)        
-        mutable_positions = [pos for pos in mutable_region if seq[pos] in set(nucleotide)]
-    elif direction == '+':
-        #select mutable position based on absence of nucleotide(s)            
-        mutable_positions = [pos for pos in mutable_region if not (seq[pos] in set(nucleotide))]      
 
-    while not mutated and mutable_positions.__len__() != 0 :
-        #print mutable_positions
-        rnd_pos = mutable_positions.pop(randint(0,mutable_positions.__len__()-1))
-        
+    mutated = False
+    seq = seq.lower()
+
+    # check direction to decide possible mutations
+    if direction == '-':
+        # select mutable position based on presence of nucleotide(s)
+        mutable_positions = [
+            pos for pos in mutable_region if seq[pos] in set(nucleotide)]
+    elif direction == '+':
+        # select mutable position based on absence of nucleotide(s)
+        mutable_positions = [
+            pos for pos in mutable_region if not (
+                seq[pos] in set(nucleotide))]
+
+    while not mutated and mutable_positions.__len__() != 0:
+        # print mutable_positions
+        rnd_pos = mutable_positions.pop(
+            randint(0, mutable_positions.__len__() - 1))
+
         if direction == '-':
             possible_mutations = list(set(bases) - set(nucleotide))
         elif direction == '+':
-            possible_mutations = list(nucleotide)    
-        
+            possible_mutations = list(nucleotide)
+
         while not mutated and possible_mutations.__len__() != 0:
-                                     
-            new_seq = seq[:rnd_pos]+possible_mutations.pop(randint(0,possible_mutations.__len__()-1))+seq[rnd_pos+1:]
-            
-            if keep_aa == True and rnd_pos >= cds_region[0] and rnd_pos <= cds_region[1]:
-                #check if AA remains the same
-                codon_p = (rnd_pos-cds_region[0])/3
-                initial_codon = seq[(cds_region[0]+codon_p*3):(cds_region[0]+codon_p*3+3)]
-                final_codon = new_seq[(cds_region[0]+codon_p*3):(cds_region[0]+codon_p*3+3)]
-                
-                #print "initial codon: " + str(initial_codon) + " AA: " + codon2aa_table[initial_codon]
-                #print "final codon: " + str(final_codon) + " AA: " + codon2aa_table[final_codon]            
-        
-                if codon2aa_table[initial_codon] == codon2aa_table[final_codon]:
+
+            new_seq = seq[:rnd_pos] + possible_mutations.pop(
+                randint(0, possible_mutations.__len__() - 1)) + seq[rnd_pos + 1:]
+
+            if keep_aa == True and rnd_pos >= cds_region[
+                    0] and rnd_pos <= cds_region[1]:
+                # check if AA remains the same
+                codon_p = (rnd_pos - cds_region[0]) / 3
+                initial_codon = seq[
+                    (cds_region[0] + codon_p * 3):(cds_region[0] + codon_p * 3 + 3)]
+                final_codon = new_seq[
+                    (cds_region[0] + codon_p * 3):(cds_region[0] + codon_p * 3 + 3)]
+
+                # print "initial codon: " + str(initial_codon) + " AA: " + codon2aa_table[initial_codon]
+                # print "final codon: " + str(final_codon) + " AA: " +
+                # codon2aa_table[final_codon]
+
+                if codon2aa_table[
+                        initial_codon] == codon2aa_table[final_codon]:
                     mutated = True
             else:
                 mutated = True
-                
-                
+
     if mutated == False:
         return None
-    
-    return new_seq
-          
 
-def SimplePWMScoreOperator(seq, pwmnt, direction=0, mutable_region = None, keep_aa=False, max_iter=100):    
+    return new_seq
+
+
+def SimplePWMScoreOperator(seq, pwmnt, direction=0,
+                           mutable_region=None, keep_aa=False, max_iter=100):
     if direction == 0:
         return seq
     elif direction == '+':
-        direction = 1;
+        direction = 1
     elif direction == '-':
-        direction = -1 
-        
-    iteration    = 0
+        direction = -1
+
+    iteration = 0
     mutated = False
     new_seq = seq
 
     while not mutated:
         iteration += 1
         if iteration == max_iter:
-            return None 
-        #draw position at random and check if better can be found
+            return None
+        # draw position at random and check if better can be found
         pos = choice(mutable_region)
-        current_value = pwmnt[new_seq[pos].replace('u','t')][pos]
+        current_value = pwmnt[new_seq[pos].replace('u', 't')][pos]
         base = choice(bases)
         if base != seq[pos] \
-        and direction * (pwmnt[base.replace('u','t')][pos] - current_value) > 0:
-        # check whether the change goes in the right direction
-            new_seq = seq[:pos]+base+seq[pos+1:]
+                and direction * (pwmnt[base.replace('u', 't')][pos] - current_value) > 0:
+            # check whether the change goes in the right direction
+            new_seq = seq[:pos] + base + seq[pos + 1:]
             mutated = True
             if keep_aa:
-                #get codon assuming the sequence is in frame
-                cod_offset = (pos)%3
-                cod        = seq[pos-cod_offset:(pos-cod_offset+3)]
-                new_cod    = new_seq[pos-cod_offset:(pos-cod_offset+3)]
+                # get codon assuming the sequence is in frame
+                cod_offset = (pos) % 3
+                cod = seq[pos - cod_offset:(pos - cod_offset + 3)]
+                new_cod = new_seq[pos - cod_offset:(pos - cod_offset + 3)]
                 if codon2aa_table[cod] != codon2aa_table[new_cod]:
                     mutated = False
                     new_seq = seq
-                    
+
     return new_seq
 
-def randomMutationOperator(sequence, keep_aa, mutable_region, cds_region, pos=None, n_mut = [1,2]):
+
+def randomMutationOperator(
+        sequence, keep_aa, mutable_region, cds_region, pos=None, n_mut=[1, 2]):
     '''
         Operator that given a sequence, mutates the sequence randomly
-            sequnce: sequence   
+            sequnce: sequence
             mutable_region - a list with all bases that can be mutated
-            cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]             
-    '''    
-    mutableCodonsPosition = [c for c in range(cds_region[0],cds_region[1],3) if set([c,c+1,c+2]).issubset(mutable_region)]
-    mutableUTRPosition = list(set(mutable_region) - set(range(cds_region[0],cds_region[1])))      
-    
+            cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]
+    '''
+    mutableCodonsPosition = [c for c in range(cds_region[0], cds_region[1], 3) if set([
+        c, c + 1, c + 2]).issubset(mutable_region)]
+    mutableUTRPosition = list(set(mutable_region) -
+                              set(range(cds_region[0], cds_region[1])))
+
     if mutableCodonsPosition == [] and mutableUTRPosition == []:
-        sys.stderr.write("randomMutationOperator: No codons available for mutation\n")
+        sys.stderr.write(
+            "randomMutationOperator: No codons available for mutation\n")
         return None
     else:
         if keep_aa == True:
-            if (mutableUTRPosition == []) or (mutableCodonsPosition != [] and choice([True,False])):
-                return mutateCDS(sequence, keep_aa, mutableCodonsPosition, cds_region, pos, n_mut)
+            if (mutableUTRPosition == []) or (
+                    mutableCodonsPosition != [] and choice([True, False])):
+                return mutateCDS(sequence, keep_aa,
+                                 mutableCodonsPosition, cds_region, pos, n_mut)
             else:
-                return mutateAll(sequence, keep_aa, mutableUTRPosition, cds_region, pos, n_mut)
+                return mutateAll(sequence, keep_aa,
+                                 mutableUTRPosition, cds_region, pos, n_mut)
         else:
-            return mutateAll(sequence, keep_aa, mutable_region, cds_region, pos, n_mut)
-                
-    
-def mutateCDS(sequence, keep_aa, mutableCodonsPosition, cds_region, pos=None, n_mut = [1,2]):
-    if keep_aa == True:                
-        result = analyzeCodons(sequence,mutableCodonsPosition)
-        
+            return mutateAll(sequence, keep_aa, mutable_region,
+                             cds_region, pos, n_mut)
+
+
+def mutateCDS(sequence, keep_aa, mutableCodonsPosition,
+              cds_region, pos=None, n_mut=[1, 2]):
+    if keep_aa == True:
+        result = analyzeCodons(sequence, mutableCodonsPosition)
+
         n_mutations = choice(n_mut)
-        
-        codons = (result[0])        
-        codons_ind = list(range(0,codons.__len__()))
-        
+
+        codons = (result[0])
+        codons_ind = list(range(0, codons.__len__()))
+
         mutated = False
         while codons_ind.__len__() != 0 and n_mutations > 0:
-            rnd_ind       = codons_ind.pop(randint(0,codons_ind.__len__()-1))
-            rnd_codon     = codons[rnd_ind]            
-            alt_codons = [c for c in aa2codon_table[codon2aa_table[rnd_codon]] if c!= rnd_codon and codon2aa_table[c]!='stop']
-            if alt_codons.__len__() != 0:                      
+            rnd_ind = codons_ind.pop(randint(0, codons_ind.__len__() - 1))
+            rnd_codon = codons[rnd_ind]
+            alt_codons = [c for c in aa2codon_table[codon2aa_table[
+                rnd_codon]] if c != rnd_codon and codon2aa_table[c] != 'stop']
+            if alt_codons.__len__() != 0:
                 mutated = True
                 n_mutations -= 1
                 new_codon = choice(alt_codons)
                 real_codon_pos = mutableCodonsPosition[rnd_ind]
-                codon_position = (real_codon_pos-cds_region[0])/3
-                all_codons = analyzeCodons(sequence,list(range(cds_region[0],cds_region[1]+1,3)))[0]
-                all_codons[codon_position]=new_codon
-                new_seq = sequence[:cds_region[0]] + ''.join(c for c in all_codons) + sequence[cds_region[1]+1:]
+                codon_position = (real_codon_pos - cds_region[0]) / 3
+                all_codons = analyzeCodons(
+                    sequence,
+                    list(
+                        range(
+                            cds_region[0],
+                            cds_region[1] +
+                            1,
+                            3)))[0]
+                all_codons[codon_position] = new_codon
+                new_seq = sequence[:cds_region[
+                    0]] + ''.join(c for c in all_codons) + sequence[cds_region[1] + 1:]
                 sequence = new_seq
-                
+
         if mutated == False:
-            sys.stderr.write("RandomMutator: Not able to mutate sequence keeping AA\n")
+            sys.stderr.write(
+                "RandomMutator: Not able to mutate sequence keeping AA\n")
             return None
-        else:                  
+        else:
             return new_seq
 
-def mutateAll(sequence, keep_aa, mutable_region, cds_region, pos=None, n_mut = [1,2]):
-    
+
+def mutateAll(sequence, keep_aa, mutable_region,
+              cds_region, pos=None, n_mut=[1, 2]):
+
     #####
     # Not necessary to keep AA
     #
     n_mutations = choice(n_mut)
-    
+
     if mutable_region == []:
         return None
-    
-    while n_mutations!=0:
-        n_mutations -= 1    
-        if pos != None:
+
+    while n_mutations != 0:
+        n_mutations -= 1
+        if pos is not None:
             intersect_mut = list(set(mutable_region) & set(pos))
             if intersect_mut != []:
                 position_to_mutate = choice(intersect_mut)
@@ -873,130 +1105,166 @@ def mutateAll(sequence, keep_aa, mutable_region, cds_region, pos=None, n_mut = [
         else:
             position_to_mutate = choice(mutable_region)
         mutation = randomMutation(sequence[position_to_mutate])
-                
-        new_seq = sequence[:position_to_mutate] + mutation + sequence[position_to_mutate+1:]
-        sequence = new_seq
-    
-    return new_seq               
-    
 
-def SimpleCAIOperator(sequence, cai_range, keep_aa, mutable_region, cds_regions, direction = '+'):
+        new_seq = sequence[:position_to_mutate] + \
+            mutation + sequence[position_to_mutate + 1:]
+        sequence = new_seq
+
+    return new_seq
+
+
+def SimpleCAIOperator(sequence, cai_range, keep_aa,
+                      mutable_region, cds_regions, direction='+'):
     '''
         Operator that given a sequence, mutates the sequence to change CAI
-            sequnce: sequence 
-            cai_range - start and end position to calculate cai - a tuple in the form (start, end)  
+            sequnce: sequence
+            cai_range - start and end position to calculate cai - a tuple in the form (start, end)
             mutable_region - a list with all bases that can be mutated
-            cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]            
-            direction: either increase ('+') or decrease ('-') CAI 
-    '''    
+            cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]
+            direction: either increase ('+') or decrease ('-') CAI
+    '''
     mutated = False
-    mutableCodonsPosition = [c for c in range(cai_range[0],cai_range[1],3) if set([c,c+1,c+2]).issubset(mutable_region)]
-                    
-    if len(mutableCodonsPosition) == 0:
-        sys.stderr.write("SimpleCAIOperator: No codons available for mutation\n")
-        return None
-    
-    result = analyzeCodons(sequence,mutableCodonsPosition)
+    mutableCodonsPosition = [c for c in range(cai_range[0], cai_range[1], 3) if set([
+        c, c + 1, c + 2]).issubset(mutable_region)]
 
-    codons = (result[0])    
-    codons_cai = (result[1])    
-    codons_ind = list(range(0,codons.__len__()))
-    
+    if len(mutableCodonsPosition) == 0:
+        sys.stderr.write(
+            "SimpleCAIOperator: No codons available for mutation\n")
+        return None
+
+    result = analyzeCodons(sequence, mutableCodonsPosition)
+
+    codons = (result[0])
+    codons_cai = (result[1])
+    codons_ind = list(range(0, codons.__len__()))
+
     while not mutated and codons_ind.__len__() != 0:
-        
-        rnd_ind       = codons_ind.pop(randint(0,codons_ind.__len__()-1))
-        rnd_codon     = codons[rnd_ind]
-        rnd_codon_cai = codons_cai[rnd_ind] 
-        
-        #select alternative codons
-        if   keep_aa == True and direction == '+':
-            alt_codons = [c for c in aa2codon_table[codon2aa_table[rnd_codon]] if c!= rnd_codon and cai_table[c] > rnd_codon_cai and codon2aa_table[c]!='stop']
+
+        rnd_ind = codons_ind.pop(randint(0, codons_ind.__len__() - 1))
+        rnd_codon = codons[rnd_ind]
+        rnd_codon_cai = codons_cai[rnd_ind]
+
+        # select alternative codons
+        if keep_aa == True and direction == '+':
+            alt_codons = [c for c in aa2codon_table[codon2aa_table[rnd_codon]] if c !=
+                          rnd_codon and cai_table[c] > rnd_codon_cai and codon2aa_table[c] != 'stop']
         elif keep_aa == True and direction == '-':
-            alt_codons = [c for c in aa2codon_table[codon2aa_table[rnd_codon]] if c!= rnd_codon and cai_table[c] < rnd_codon_cai and codon2aa_table[c]!='stop']
+            alt_codons = [c for c in aa2codon_table[codon2aa_table[rnd_codon]] if c !=
+                          rnd_codon and cai_table[c] < rnd_codon_cai and codon2aa_table[c] != 'stop']
         elif keep_aa == False and direction == '+':
-            alt_codons = list(k for k,v in cai_table.items() if v>rnd_codon_cai and codon2aa_table[k]!='stop')
+            alt_codons = list(k for k, v in cai_table.items(
+            ) if v > rnd_codon_cai and codon2aa_table[k] != 'stop')
         elif keep_aa == False and direction == '-':
-            alt_codons = list(k for k,v in cai_table.items() if v<rnd_codon_cai and codon2aa_table[k]!='stop')
-            
-        if alt_codons.__len__() != 0:                      
+            alt_codons = list(k for k, v in cai_table.items(
+            ) if v < rnd_codon_cai and codon2aa_table[k] != 'stop')
+
+        if alt_codons.__len__() != 0:
             mutated = True
             new_codon = choice(alt_codons)
-            #print "new: " + str(new_codon)                
-        
+            # print "new: " + str(new_codon)
+
     if mutated == False:
         sys.stderr.write("SimpleCAIOperator: Not able to mutate sequence\n")
         return None
-    else:              
-        #print "CAI operator: old_codon -> " + str(rnd_codon)
-        #print "CAI operator: new_codon -> " + str(new_codon)    
+    else:
+        # print "CAI operator: old_codon -> " + str(rnd_codon)
+        # print "CAI operator: new_codon -> " + str(new_codon)
         real_codon_pos = mutableCodonsPosition[rnd_ind]
-        codon_position = (real_codon_pos-cai_range[0])/3
-        all_codons = analyzeCodons(sequence,list(range(cai_range[0],cai_range[1]+1,3)))[0]             
-        all_codons[codon_position]=new_codon
+        codon_position = (real_codon_pos - cai_range[0]) / 3
+        all_codons = analyzeCodons(
+            sequence,
+            list(
+                range(
+                    cai_range[0],
+                    cai_range[1] +
+                    1,
+                    3)))[0]
+        all_codons[codon_position] = new_codon
 
-                                     
-        new_seq = sequence[:cai_range[0]] + ''.join(c for c in all_codons) + sequence[cai_range[1]+1:]
-        return new_seq               
-    
-def hammingDistance(seq1,seq2):
+        new_seq = sequence[:cai_range[
+            0]] + ''.join(c for c in all_codons) + sequence[cai_range[1] + 1:]
+        return new_seq
+
+
+def hammingDistance(seq1, seq2):
     score_nt = 0
 
-    for i in range(0,len(seq1)):
+    for i in range(0, len(seq1)):
         if seq1[i] != seq2[i]:
             score_nt += 1
-            
+
     return score_nt
-    
-def SimpleHydropathyIndexOperator(sequence, hi_range, keep_aa, mutable_region, cds_regions, direction = '+'):
+
+
+def SimpleHydropathyIndexOperator(
+        sequence, hi_range, keep_aa, mutable_region, cds_regions, direction='+'):
     '''
         Operator that given a sequence, mutates the sequence to change CAI
-            sequnce: sequence 
-            cai_range - start and end position to calculate cai - a tuple in the form (start, end)  
+            sequnce: sequence
+            cai_range - start and end position to calculate cai - a tuple in the form (start, end)
             mutable_region - a list with all bases that can be mutated
-            cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]            
-            direction: either increase ('+') or decrease ('-') CAI 
-    '''    
+            cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]
+            direction: either increase ('+') or decrease ('-') CAI
+    '''
     mutated = False
-    mutableCodonsPosition = [c for c in range(hi_range[0],hi_range[1],3) if set([c,c+1,c+2]).issubset(mutable_region)]
-                    
+    mutableCodonsPosition = [c for c in range(hi_range[0], hi_range[1], 3) if set([
+        c, c + 1, c + 2]).issubset(mutable_region)]
+
     if len(mutableCodonsPosition) == 0:
-        sys.stderr.write("SimpleHydropathyIndexOperator: No codons available for mutation\n")
+        sys.stderr.write(
+            "SimpleHydropathyIndexOperator: No codons available for mutation\n")
         return None
-    
-    result = analyzeCodons(sequence,mutableCodonsPosition,data_table = hydropathy_index_table)
-    codons = (result[0])    
-    codons_hi = (result[1])    
-    codons_ind = list(range(0,codons.__len__()))
-    
+
+    result = analyzeCodons(
+        sequence,
+        mutableCodonsPosition,
+        data_table=hydropathy_index_table)
+    codons = (result[0])
+    codons_hi = (result[1])
+    codons_ind = list(range(0, codons.__len__()))
+
     while not mutated and codons_ind.__len__() != 0:
-        
-        rnd_ind       = codons_ind.pop(randint(0,codons_ind.__len__()-1))
-        rnd_codon     = codons[rnd_ind]
-        rnd_codon_hi  = codons_hi[rnd_ind] 
-        
-        #select alternative codons
-        if   keep_aa == True and direction == '+':
-            alt_codons = [c for c in codons_list if c!= rnd_codon and hydropathy_index_table[c] > rnd_codon_hi and codon2aa_table[c]!='stop' and hammingDistance(c, rnd_codon)==1]
+
+        rnd_ind = codons_ind.pop(randint(0, codons_ind.__len__() - 1))
+        rnd_codon = codons[rnd_ind]
+        rnd_codon_hi = codons_hi[rnd_ind]
+
+        # select alternative codons
+        if keep_aa == True and direction == '+':
+            alt_codons = [c for c in codons_list if c != rnd_codon and hydropathy_index_table[
+                c] > rnd_codon_hi and codon2aa_table[c] != 'stop' and hammingDistance(c, rnd_codon) == 1]
         elif keep_aa == True and direction == '-':
-            alt_codons = [c for c in codons_list if c!= rnd_codon and hydropathy_index_table[c] < rnd_codon_hi and codon2aa_table[c]!='stop' and hammingDistance(c, rnd_codon)==1]
+            alt_codons = [c for c in codons_list if c != rnd_codon and hydropathy_index_table[
+                c] < rnd_codon_hi and codon2aa_table[c] != 'stop' and hammingDistance(c, rnd_codon) == 1]
         elif keep_aa == False and direction == '+':
-            alt_codons = list(k for k,v in cai_table.items() if v>rnd_codon_hi and codon2aa_table[k]!='stop')
+            alt_codons = list(k for k, v in cai_table.items(
+            ) if v > rnd_codon_hi and codon2aa_table[k] != 'stop')
         elif keep_aa == False and direction == '-':
-            alt_codons = list(k for k,v in cai_table.items() if v<rnd_codon_hi and codon2aa_table[k]!='stop')
-            
-        if alt_codons.__len__() != 0:                      
+            alt_codons = list(k for k, v in cai_table.items(
+            ) if v < rnd_codon_hi and codon2aa_table[k] != 'stop')
+
+        if alt_codons.__len__() != 0:
             mutated = True
             new_codon = choice(alt_codons)
-            #print "new: " + str(new_codon)
-        
+            # print "new: " + str(new_codon)
+
     if mutated == False:
-        sys.stderr.write("SimpleHydropathyIndexOperator: Not able to mutate sequence\n")
+        sys.stderr.write(
+            "SimpleHydropathyIndexOperator: Not able to mutate sequence\n")
         return None
-    else:          
-        all_codons = analyzeCodons(sequence,list(range(hi_range[0],hi_range[1]+1,3)))[0]             
-        all_codons[rnd_ind]=new_codon 
-                                     
-        new_seq = sequence[:hi_range[0]] + ''.join(c for c in all_codons) + sequence[hi_range[1]+1:]
+    else:
+        all_codons = analyzeCodons(
+            sequence,
+            list(
+                range(
+                    hi_range[0],
+                    hi_range[1] +
+                    1,
+                    3)))[0]
+        all_codons[rnd_ind] = new_codon
+
+        new_seq = sequence[:hi_range[0]] + \
+            ''.join(c for c in all_codons) + sequence[hi_range[1] + 1:]
         return new_seq
 
 ######################
@@ -1005,79 +1273,94 @@ def SimpleHydropathyIndexOperator(sequence, hi_range, keep_aa, mutable_region, c
 ##
 ######################
 
+
 def look_for_RBS(seq):
     max_score = -99
-    max_pos   = -1
+    max_pos = -1
 
-    #print seq
-        
-    #look for putative start sites
-    for i in range(0,len(seq)-2,1):
-        codon = seq[i:(i+3)] 
-        if codon in ('atg','ttg','gtg'): #there is a start codon
-            start = max([0,i - 17]) #not farther than 17 nucleotides
-            stop  = max([0,i - 4])  #at least 3 nucleotides away
-            
-            aux_seq = seq[start:stop]                        
-            res = analyze_pwm_score(aux_seq,pwm_rbs)
+    # print seq
+
+    # look for putative start sites
+    for i in range(0, len(seq) - 2, 1):
+        codon = seq[i:(i + 3)]
+        if codon in ('atg', 'ttg', 'gtg'):  # there is a start codon
+            start = max([0, i - 17])  # not farther than 17 nucleotides
+            stop = max([0, i - 4])  # at least 3 nucleotides away
+
+            aux_seq = seq[start:stop]
+            res = analyze_pwm_score(aux_seq, pwm_rbs)
             score = res['PWMScore']
             position = res['PWMScorePosition']
-            
-            #print aux_seq , "\t" , score , "\t" , position
-            
-            #return start codon
-            position=i
-            #print str(i) + "\t" + aux_seq + "\t" + str([score, start + position])
-            
+
+            # print aux_seq , "\t" , score , "\t" , position
+
+            # return start codon
+            position = i
+            # print str(i) + "\t" + aux_seq + "\t" + str([score, start +
+            # position])
+
             if score >= max_score:
-                max_score = score 
+                max_score = score
                 #max_pos   = start + position
-                #return start codon
-                max_pos   = position
-                
+                # return start codon
+                max_pos = position
+
     return (max_score, max_pos)
 
+
 def look_for_promoters(seq):
-    #look for putative promoters                    
-    res = analyze_pwm_score(seq,pwm_pro15)
+    # look for putative promoters
+    res = analyze_pwm_score(seq, pwm_pro15)
     score1 = res['PWMScore']
     position1 = res['PWMScorePosition']
-    res = analyze_pwm_score(seq,pwm_pro16)
+    res = analyze_pwm_score(seq, pwm_pro16)
     score2 = res['PWMScore']
     position2 = res['PWMScorePosition']
-    res = analyze_pwm_score(seq,pwm_pro17)
+    res = analyze_pwm_score(seq, pwm_pro17)
     score3 = res['PWMScore']
     position3 = res['PWMScorePosition']
-    res = analyze_pwm_score(seq,pwm_pro18)
+    res = analyze_pwm_score(seq, pwm_pro18)
     score4 = res['PWMScore']
     position4 = res['PWMScorePosition']
-    res = analyze_pwm_score(seq,pwm_pro19)
+    res = analyze_pwm_score(seq, pwm_pro19)
     score5 = res['PWMScore']
     position5 = res['PWMScorePosition']
-    
-    all_scores = [(score1, position1, 15),(score2, position2, 16),(score3, position3, 17),(score4, position4, 18),(score5, position5, 19)]         
-                                               
+
+    all_scores = [(score1, position1, 15), (score2, position2, 16), (score3,
+                                                                     position3, 17), (score4, position4, 18), (score5, position5, 19)]
+
     return max(all_scores, key=lambda x: x[0])
 
+
 def look_for_terminators(seq):
-    #use transtermHP
-    #create input files
-    file1 = 'test' + str(randint(0000,1000)) + '.fa';
-    file2 = 'test' + str(randint(0000,1000)) + '-fake.coords';
-    
-    system("echo '>seq1\n" + str(seq) + "' > tmp/transterm_files/"+file1)
-    system("echo 'fakegene1    1 2    seq1\nfakegene1    " + str(len(seq)-1) + " " + str(len(seq)) +"    seq1' > tmp/transterm_files/"+file2)
-    #run transtermhp
-    output = Popen("./3rdParty/transterm/transterm -p 3rdParty/transterm/expterm.dat tmp/transterm_files/"+file1+" tmp/transterm_files/"+file2+" 2> tmp/transterm_files/err.txt | awk /TERM/'{print $8}'", stdout=PIPE, stderr=None, shell=True).stdout.read()
+    # use transtermHP
+    # create input files
+    file1 = 'test' + str(randint(0000, 1000)) + '.fa'
+    file2 = 'test' + str(randint(0000, 1000)) + '-fake.coords'
+
+    system("echo '>seq1\n" + str(seq) + "' > tmp/transterm_files/" + file1)
+    system("echo 'fakegene1    1 2    seq1\nfakegene1    " + str(len(seq) -
+                                                                 1) + " " + str(len(seq)) + "    seq1' > tmp/transterm_files/" + file2)
+    # run transtermhp
+    output = Popen(
+        "./3rdParty/transterm/transterm -p 3rdParty/transterm/expterm.dat tmp/transterm_files/" +
+        file1 +
+        " tmp/transterm_files/" +
+        file2 +
+        " 2> tmp/transterm_files/err.txt | awk /TERM/'{print $8}'",
+        stdout=PIPE,
+        stderr=None,
+        shell=True).stdout.read()
 
     if output == '':
         return 0
     else:
-        #print "Terminator output: " + output
-        all_term_scores = [float(score) for score in output.split()] 
-        return max(all_term_scores)   
+        # print "Terminator output: " + output
+        all_term_scores = [float(score) for score in output.split()]
+        return max(all_term_scores)
 
-#### WHAT's THIS for?
+# WHAT's THIS for?
+
 
 def get_coli_cds():
     """
@@ -1097,81 +1380,108 @@ def get_coli_cds():
     h.close()
     return [cds, bname, eck]
 
+
 def clean_cds(cds):
     to_drop = []
     for gene in cds[0]:
-        if len(cds[0][gene])%3 != 0:
+        if len(cds[0][gene]) % 3 != 0:
             to_drop.append(gene)
         elif cds[0][gene][1:3] != "tg" or cds[0][gene][0:3] == "ctg":
             to_drop.append(gene)
         else:
-            for i in range(0,len(cds[0][gene])-3,3):
-                if cds[0][gene][i:i+3] in scod:
+            for i in range(0, len(cds[0][gene]) - 3, 3):
+                if cds[0][gene][i:i + 3] in scod:
                     to_drop.append(gene)
                     break
     for gene in to_drop:
         gene, cds[0].pop(gene)
     return cds
 
-def get_core_cds(cds, core_path="/Users/cambray/Dropbox/WorkStuff/Sequences/Genomes/core_genome_coli_29_MicroScope_11_10_26.csv"):
+
+def get_core_cds(
+        cds, core_path="/Users/cambray/Dropbox/WorkStuff/Sequences/Genomes/core_genome_coli_29_MicroScope_11_10_26.csv"):
     core = []
     h = open(core_path)
     h.readline()
     for l in h:
         l = l.strip()
         splitline = l.split(",")
-        core.append(splitline[5].replace("'",""))
+        core.append(splitline[5].replace("'", ""))
     h.close()
     cds[0] = dict([(k, v) for (k, v) in list(cds[0].items()) if k in core])
-    return cds        
+    return cds
+
 
 def regression_tai(cds, out_path="", win=21, length=90):
     if out_path:
         h = open(out_path, "w")
-    h.write("gene,"+",".join(["s%i" % i for i in range(2, length/3+2)])+","+",".join(["w%i" % i for i in range(2, length/3-win+3)])+",slope,intercept,r2, sumsq, merror\n")
+    h.write("gene," +
+            ",".join(["s%i" %
+                      i for i in range(2, length /
+                                       3 +
+                                       2)]) +
+            "," +
+            ",".join(["w%i" %
+                      i for i in range(2, length /
+                                       3 -
+                                       win +
+                                       3)]) +
+            ",slope,intercept,r2, sumsq, merror\n")
     for gene in cds:
-        seq = cds[gene][3:length+3].lower()
-        if not len(seq)<length:
+        seq = cds[gene][3:length + 3].lower()
+        if not len(seq) < length:
             score, smoothie = analyze_tai(seq, window=win)
-            reg    = lin(list(range(2,len(smoothie)+2)), smoothie)
+            reg = lin(list(range(2, len(smoothie) + 2)), smoothie)
             if out_path:
                 h.write("%s,%s,%s,%s\n" % (gene,
                                            ",".join([str(n) for n in score]),
-                                           ",".join([str(n) for n in smoothie]),
+                                           ",".join([str(n)
+                                                     for n in smoothie]),
                                            ",".join([str(n) for n in reg])))
     if out_path:
         h.close()
 
+
 def bneck_tai(cds, out_path="", win=21, data=tai_tuller):
     bname = cds[1]
-    cds   = cds[0] 
+    cds = cds[0]
     if out_path:
         h = open(out_path, "w")
-        h.write("gene,bname,abs_pos,abs_strength,rel_pos,rel_strength,gene_length,gene_strength\n")
+        h.write(
+            "gene,bname,abs_pos,abs_strength,rel_pos,rel_strength,gene_length,gene_strength\n")
     for gene in cds:
-        if len(cds[gene])/3 > win:
-            scores, smooths = analyze_tai(cds[gene][:-3], window=win, method="harmonic", data=tai_tuller)
-            bneck = max(smooths) 
-            pos   = smooths.index(bneck)
-            gene_tai = sum([1/v for v in scores])/len(scores)
+        if len(cds[gene]) / 3 > win:
+            scores, smooths = analyze_tai(
+                cds[gene][:-3], window=win, method="harmonic", data=tai_tuller)
+            bneck = max(smooths)
+            pos = smooths.index(bneck)
+            gene_tai = sum([1 / v for v in scores]) / len(scores)
             if out_path:
-                h.write("%s,%s,%i,%.3f,%.3f,%.3F,%i,%.3f\n" % (gene, bname[gene], pos ,bneck, float(pos)/(len(cds[gene])/3-win), bneck/gene_tai, len(scores), gene_tai))
+                h.write("%s,%s,%i,%.3f,%.3f,%.3F,%i,%.3f\n" % (gene, bname[gene], pos, bneck, float(
+                    pos) / (len(cds[gene]) / 3 - win), bneck / gene_tai, len(scores), gene_tai))
     if out_path:
         h.close()
     return
-                
-                
-    
+
+
 def construct_pssm(cds, length=90, out_path="", prob=None):
     """
     Construct Position Specific Scoring Matrices with log-likelihood values
     length: size of analyzed region from start, in bp  (sequences that are not this size are discarded)
-    prob : a dict of bases with a priori expected probabilities  
+    prob : a dict of bases with a priori expected probabilities
     """
     cds = cds[0]
     if not prob:
-        prob = {"a":0.25, "t":0.25, "g":0.25, "c":0.25}
-    m = {"a":[0]*length, "t":[0]*length, "g":[0]*length, "c":[0]*length}
+        prob = {"a": 0.25, "t": 0.25, "g": 0.25, "c": 0.25}
+    m = {
+        "a": [0] *
+        length,
+        "t": [0] *
+        length,
+        "g": [0] *
+        length,
+        "c": [0] *
+        length}
     tot_gene = 0.0
     for gene in cds:
         if len(cds[gene]) >= length:
@@ -1179,12 +1489,12 @@ def construct_pssm(cds, length=90, out_path="", prob=None):
             for i in range(length):
                 m[cds[gene][i]][i] += 1
     for k in m:
-        m[k] = [log((v/tot_gene)/prob[k]) for v in m[k]]
+        m[k] = [log((v / tot_gene) / prob[k]) for v in m[k]]
     if out_path:
         h = open(out_path, "w")
-        h.write(","+",".join([str(i) for i in range(1,length+1)])+"\n")
+        h.write("," + ",".join([str(i) for i in range(1, length + 1)]) + "\n")
         for b in ["a", "t", "g", "c"]:
-            h.write(b+","+",".join(["%.2f" % v for v in m[b]])+"\n")
+            h.write(b + "," + ",".join(["%.2f" % v for v in m[b]]) + "\n")
         h.close()
     return m
 
