@@ -4,14 +4,16 @@ Created on Oct 3, 2011
 @author: jcg
 '''
 
-from Data import *
-from math import log, exp, sqrt
-from random import randint, choice
-import string
-from os import system, devnull, chdir, path
-from subprocess import call, Popen, PIPE, check_output
+import os
 import sys
 import glob
+import subprocess
+
+import math
+import random
+import string
+
+import Data
 
 ######################
 ##
@@ -55,7 +57,7 @@ def translateCDS(sequence):
 
     aa_seq = ""
     for i in range(0, len(sequence), 3):
-        aa_seq += codon2aa_table[sequence[i:(i + 3)]] + " "
+        aa_seq += Data.codon2aa_table[sequence[i:(i + 3)]] + " "
 
     return aa_seq
 
@@ -81,9 +83,9 @@ def randomMutation(nucleotide):
     return random nucleotide (different than original)
     """
 
-    possible_mut = list(set(bases) - set(nucleotide))
+    possible_mut = list(set(Data.bases) - set(nucleotide))
 
-    return choice(possible_mut)
+    return random.choice(possible_mut)
 
 
 def diff(str1, str2):
@@ -142,7 +144,7 @@ def average(array):
 
 def stddev(array):
     avg = average(array)
-    return sqrt(average([(x - avg)**2 for x in array]))
+    return math.sqrt(average([(x - avg)**2 for x in array]))
 
 
 ######################
@@ -156,28 +158,28 @@ def structureAnalysis(structure_file, propertyOfInterest="ss"):
         given a structure file it returns the position that are either single stranded "ss" or double stranded "ds"
     '''
 
-    if path.exists("tmp/structures/" + structure_file + ".ct"):
+    if os.path.exists("tmp/structures/" + structure_file + ".ct"):
         if propertyOfInterest == "ds":
-            output = Popen(
+            output = subprocess.Popen(
                 "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
                 structure_file +
                 ".ct | awk /[[:digit:]][[:blank:]]0/'{print $1}'",
-                stdout=PIPE,
+                stdout=subprocess.PIPE,
                 shell=True).stdout.read()
             return [eval(k) for k in output.split()]
         elif propertyOfInterest == "ss":
-            output = Popen(
+            output = subprocess.Popen(
                 "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
                 structure_file +
                 ".ct | awk /[[:digit:]][[:blank:]]1/'{print $1}'",
-                stdout=PIPE,
+                stdout=subprocess.PIPE,
                 shell=True).stdout.read()
             return [eval(k) for k in output.split()]
         else:
             return []
 
 
-def analyzeCodons(seq, positions=None, data_table=cai_table):
+def analyzeCodons(seq, positions=None, data_table=Data.cai_table):
     '''
        given a sequence it returns a list with two elements: [ list_of_codons, list_of_codons_cai]
     '''
@@ -198,7 +200,7 @@ def analyzeCodons(seq, positions=None, data_table=cai_table):
     return [codons, codons_cai]
 
 
-def get_alternate_codons(codon, data=tai_tuller, dist=0):
+def get_alternate_codons(codon, data=Data.tai_tuller, dist=0):
     """
         returns a alternate codon to codon
         data: dictionary with a map between codons and tAI
@@ -207,21 +209,21 @@ def get_alternate_codons(codon, data=tai_tuller, dist=0):
     """
     if dist == 0:
         # return only syn codon
-        return [(syn_cod, data[syn_cod]) for syn_cod in aa2codon_table[
-            codon2aa_table[codon]] if syn_cod != codon]
+        return [(syn_cod, data[syn_cod]) for syn_cod in Data.aa2codon_table[
+            Data.codon2aa_table[codon]] if syn_cod != codon]
     else:
         # return syn codon and codon 1 nt away
-        return [(alt_cod, data[alt_cod]) for alt_cod in codons_list if (
+        return [(alt_cod, data[alt_cod]) for alt_cod in Data.codons_list if (
             alt_cod != codon and diff(codon, alt_cod) <= dist)]
 
 
-def get_tai(seq, data=tai_tuller):
+def get_tai(seq, data=Data.tai_tuller):
     seq = seq.lower()
 #    seq = seq.replace("t","u")
     return [(seq[i:i + 3], data[seq[i:i + 3]]) for i in range(0, len(seq), 3)]
 
 
-def analyze_tai(seq, window=21, data=tai_tuller, method="harmonic"):
+def analyze_tai(seq, window=21, data=Data.tai_tuller, method="harmonic"):
     seq = seq.lower()
 #   seq = seq.replace("t","u")
     scores = [data[seq[i:i + 3]] for i in range(0, len(seq), 3)]
@@ -245,27 +247,27 @@ def analyze_hydropathy(seq):
     score = 0
     len_sq = 0
     for i in range(0, len(seq), 3):
-        if seq[i:i + 3] in hydropathy_index_table:
-            score += (hydropathy_index_table[seq[i:i + 3]])
+        if seq[i:i + 3] in Data.hydropathy_index_table:
+            score += (Data.hydropathy_index_table[seq[i:i + 3]])
             len_sq += 1
     score /= len_sq
     return score
 
 
-def analyze_cai(seq):
+def analyze_cai(seq, reference_table=Data.cai_table):
     seq = seq.lower()
     score = 0
     len_sq = 0
     for i in range(0, len(seq), 3):
-        if seq[i:i + 3] in cai_table:
-            score += log(cai_table[seq[i:i + 3]])
+        if seq[i:i + 3] in reference_table:
+            score += math.log(reference_table[seq[i:i + 3]])
             len_sq += 1
     score /= len_sq
-    return exp(score)
+    return math.exp(score)
 
 
 def analyze_bottleneck(sequence, window=20,
-                       data=tai_tuller, method="harmonic"):
+                       data=Data.tai_tuller, method="harmonic"):
     score, smooth = analyze_tai(sequence, window, data=data, method=method)
 
     return [score, smooth]
@@ -284,7 +286,6 @@ def analyze_bottleneck_rel_strength(sequence, score, smooth):
 
 
 def analyze_ntcontent(seq):
-
     seq = seq.replace('u', 't')
     nuc_freq = {'NucleotideContentAT': 0,
                 'NucleotideContentGC': 0,
@@ -300,12 +301,10 @@ def analyze_ntcontent(seq):
     nuc_freq['NucleotideContentT'] /= float(seq.__len__())
     nuc_freq['NucleotideContentG'] /= float(seq.__len__())
     nuc_freq['NucleotideContentC'] /= float(seq.__len__())
-    nuc_freq['NucleotideContentAT'] = (
-        nuc_freq['NucleotideContentA'] +
-        nuc_freq['NucleotideContentT'])
-    nuc_freq['NucleotideContentGC'] = (
-        nuc_freq['NucleotideContentG'] +
-        nuc_freq['NucleotideContentC'])
+    nuc_freq['NucleotideContentAT'] = \
+        nuc_freq['NucleotideContentA'] + nuc_freq['NucleotideContentT']
+    nuc_freq['NucleotideContentGC'] = \
+        nuc_freq['NucleotideContentG'] + nuc_freq['NucleotideContentC']
 
     return nuc_freq
 
@@ -338,8 +337,8 @@ def pwm_score(seq, pwm):
 def analyze_terminator(seq):
     # use transtermHP
     # create input files
-    file1 = 'test' + str(randint(0000, 1000)) + '.fa'
-    file2 = 'test' + str(randint(0000, 1000)) + '-fake.coords'
+    file1 = 'test' + str(random.randint(0000, 1000)) + '.fa'
+    file2 = 'test' + str(random.randint(0000, 1000)) + '-fake.coords'
 
     with open("tmp/transterm_files/" + file1, "w") as fh:
         print(">seq1", file=fh)
@@ -350,13 +349,13 @@ def analyze_terminator(seq):
         print("fakegene1    " + str(len(seq) - 1) + " " + str(len(seq)) + "    seq1", file=fh)
 
     # run transtermhp
-    output = Popen(
+    output = subprocess.Popen(
         "./3rdParty/transterm/transterm -p 3rdParty/transterm/expterm.dat tmp/transterm_files/" +
         file1 +
         " tmp/transterm_files/" +
         file2 +
         " 2> tmp/transterm_files/err.txt | awk /TERM/'{print $8}'",
-        stdout=PIPE,
+        stdout=subprocess.PIPE,
         stderr=None,
         shell=True).stdout.read()
 
@@ -375,12 +374,12 @@ def analyze_terminator(seq):
 
 def analyze_duplex_structure(seq1, seq2, filename, debug=False):
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     structure_pairs = {}
     data = {}
 
-    r = randint(4, 1000)
+    r = random.randint(4, 1000)
 
     s1_file = str(r) + "s1.seq"
     s2_file = str(r) + "s2.seq"
@@ -392,23 +391,23 @@ def analyze_duplex_structure(seq1, seq2, filename, debug=False):
         print(seq2, file=fh)
 
     # this line is necessary to omit output generated by UNAFOLD
-    with open(devnull, 'w') as fnull:
-        call(
+    with open(os.devnull, 'w') as fnull:
+        subprocess.call(
             "./3rdParty/unafold/hybrid-min -n RNA -o " +
                 filename + " " + s1_file + " " + s2_file + " -t 37 -T 37",
             shell=True,
             stdout=fnull,
             stderr=fnull)  # code is necessary to omit output generated by UNAFOLD
 
-        if path.exists(project_dir + "/" + filename + ".ct"):
-            system("mv %s*.ct tmp/structures/" % filename)
-            system("mv %s*.asc tmp/structures/" % filename)
+        if os.path.exists(Data.project_dir + "/" + filename + ".ct"):
+            os.system("mv %s*.ct tmp/structures/" % filename)
+            os.system("mv %s*.asc tmp/structures/" % filename)
 
-            output_ds = Popen(
+            output_ds = subprocess.Popen(
                 "cat tmp/structures/" +
                 filename +
                 ".ct | awk '{print $1 , $5}'",
-                stdout=PIPE,
+                stdout=subprocess.PIPE,
                 shell=True).stdout.read()
             list_of_pairs = output_ds.split('\n')[1:-1]
 
@@ -428,12 +427,12 @@ def analyze_duplex_structure(seq1, seq2, filename, debug=False):
 def analyze_duplex_mfe(filename, region=None):
     data = {}
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     if region is None:
-        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
+        if os.path.exists(Data.project_dir + "/tmp/structures/" + filename + ".ct"):
             try:
-                res = check_output(
+                res = subprocess.check_output(
                     ["./3rdParty/unafold/ct-energy", "tmp/structures/" + filename + ".ct"])
 
                 if res != "":
@@ -444,7 +443,7 @@ def analyze_duplex_mfe(filename, region=None):
             except NameError:
                 data['RNADuplexMFE'] = 'NA'
 
-            #system("rm tmp/structures/%s*" % filename)
+            #os.system("rm tmp/structures/%s*" % filename)
         else:
             data['RNADuplexMFE'] = 'NA'
 
@@ -457,25 +456,25 @@ def analyze_duplex_mfe(filename, region=None):
 def analyze_duplex_ds(filename, seq1="", region=None):
     data = {}
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     if region is None:
-        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
-            output_ds = Popen(
+        if os.path.exists(Data.project_dir + "/tmp/structures/" + filename + ".ct"):
+            output_ds = subprocess.Popen(
                 "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
                 filename +
                 ".ct | awk /[[:digit:]][[:blank:]]0/'{print $1}'",
-                stdout=PIPE,
+                stdout=subprocess.PIPE,
                 shell=True).stdout.read()
             output = output_ds.split()
-            data['RNADuplexDoubleStrandedBasesList_Mol1'] = [
-                eval(k) for k in output if eval(k) <= len(seq1)]
-            data['RNADuplexDoubleStrandedBases_Mol1'] = len(
-                data['RNADuplexDoubleStrandedBasesList_Mol1'])
-            data['RNADuplexDoubleStrandedBasesList_Mol2'] = [
-                eval(k) - len(seq1) for k in output if eval(k) > len(seq1)]
-            data['RNADuplexDoubleStrandedBases_Mol2'] = len(
-                data['RNADuplexDoubleStrandedBasesList_Mol2'])
+            data['RNADuplexDoubleStrandedBasesList_Mol1'] = \
+                [eval(k) for k in output if eval(k) <= len(seq1)]
+            data['RNADuplexDoubleStrandedBases_Mol1'] = \
+                len(data['RNADuplexDoubleStrandedBasesList_Mol1'])
+            data['RNADuplexDoubleStrandedBasesList_Mol2'] = \
+                [eval(k) - len(seq1) for k in output if eval(k) > len(seq1)]
+            data['RNADuplexDoubleStrandedBases_Mol2'] = \
+                len(data['RNADuplexDoubleStrandedBasesList_Mol2'])
         else:
             data['RNADuplexDoubleStrandedBasesList_Mol1'] = 'NA'
             data['RNADuplexDoubleStrandedBases_Mol1'] = 'NA'
@@ -491,25 +490,25 @@ def analyze_duplex_ds(filename, seq1="", region=None):
 def analyze_duplex_ss(filename, seq1="", region=None):
     data = {}
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     if region is None:
-        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
-            output_ss = Popen(
+        if os.path.exists(Data.project_dir + "/tmp/structures/" + filename + ".ct"):
+            output_ss = subprocess.Popen(
                 "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
                 filename +
                 ".ct | awk /[[:digit:]][[:blank:]]1/'{print $1}'",
-                stdout=PIPE,
+                stdout=subprocess.PIPE,
                 shell=True).stdout.read()
             output = output_ss.split()
-            data['RNADuplexSingleStrandedBasesList_Mol1'] = [
-                eval(k) for k in output if eval(k) <= len(seq1)]
-            data['RNADuplexSingleStrandedBases_Mol1'] = len(
-                data['RNADuplexDoubleStrandedBasesList_Mol1'])
-            data['RNADuplexSingleStrandedBasesList_Mol2'] = [
-                eval(k) - len(seq1) for k in output if eval(k) > len(seq1)]
-            data['RNADuplexSingleStrandedBases_Mol2'] = len(
-                data['RNADuplexDoubleStrandedBasesList_Mol2'])
+            data['RNADuplexSingleStrandedBasesList_Mol1'] = \
+                [eval(k) for k in output if eval(k) <= len(seq1)]
+            data['RNADuplexSingleStrandedBases_Mol1'] = \
+                len(data['RNADuplexDoubleStrandedBasesList_Mol1'])
+            data['RNADuplexSingleStrandedBasesList_Mol2'] = \
+                [eval(k) - len(seq1) for k in output if eval(k) > len(seq1)]
+            data['RNADuplexSingleStrandedBases_Mol2'] = \
+                len(data['RNADuplexDoubleStrandedBasesList_Mol2'])
         else:
             data['RNADuplexSingleStrandedBasesList_Mol1'] = 'NA'
             data['RNADuplexSingleStrandedBases_Mol1'] = 'NA'
@@ -522,7 +521,7 @@ def analyze_duplex_ss(filename, seq1="", region=None):
 
 def analyze_structure_prob(seq, filename, window=50, region=[], debug=False):
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     structure_pairs = {}
     data = {}
@@ -532,8 +531,8 @@ def analyze_structure_prob(seq, filename, window=50, region=[], debug=False):
         print(seq, file=fh)
 
     # this line is necessary to omit output generated by UNAFOLD
-    with open(devnull, 'w') as fnull:
-        call(
+    with open(os.devnull, 'w') as fnull:
+        subprocess.call(
             "3rdParty/vienna/RNAplfold -d2 -noLP -W " +
             str(window) +
             " -u 1 < " +
@@ -543,11 +542,11 @@ def analyze_structure_prob(seq, filename, window=50, region=[], debug=False):
             stdout=fnull,
             stderr=fnull)  # code is necessary to omit output generated by RNAplfold
 
-        output_ss = Popen(
+        output_ss = subprocess.Popen(
             "cat " +
             filename +
             "_lunp | awk '{print $1 \"\t\" $2}'",
-            stdout=PIPE,
+            stdout=subprocess.PIPE,
             shell=True).stdout.read()
         l = output_ss.rstrip().split('\n')[2:]
 
@@ -565,8 +564,9 @@ def analyze_structure_prob(seq, filename, window=50, region=[], debug=False):
             reg_avg = reg_avg / len(region)
             data['StructureProb'] = reg_avg
         else:
-            data['StructureProb'] = sum(
-                structure_pairs.values()) / len(list(structure_pairs.keys()))
+            data['StructureProb'] = \
+                sum(structure_pairs.values()) / \
+                len(list(structure_pairs.keys()))
 
         data['StructureProbList'] = structure_pairs
 
@@ -578,20 +578,20 @@ def analyze_structure_prob(seq, filename, window=50, region=[], debug=False):
 
 def analyze_ensemble(seq, filename, sample_size=100, debug=False):
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     with open(filename + ".fa", "w") as fh:
         print(">" + filename, file=fh)
         print(seq, file=fh)
 
-    output_ss = Popen(
+    output_ss = subprocess.Popen(
         "./3rdParty/vienna/RNAsubopt -d2 -noLP -s -p " +
         str(sample_size) +
         " < " +
         filename +
         ".fa | tail -n " +
         str(sample_size),
-        stdout=PIPE,
+        stdout=subprocess.PIPE,
         shell=True).stdout.read()
 
     l = output_ss.rstrip().split('\n')
@@ -605,11 +605,11 @@ def analyze_ensemble(seq, filename, sample_size=100, debug=False):
     with open(filename + ".st", "w") as fh:
         print(string_aux, file=fh)
 
-    output_ss = Popen(
+    output_ss = subprocess.Popen(
         "./3rdParty/vienna/RNAeval -d2 < " +
         filename +
         ".st | perl -lne 'm/.* \((.*)\)$// print $1'",
-        stdout=PIPE,
+        stdout=subprocess.PIPE,
         shell=True).stdout.read().rstrip()
     ens_st = [float(x) for x in output_ss.rstrip().split('\n')[2:]]
 
@@ -629,7 +629,7 @@ def analyze_ensemble(seq, filename, sample_size=100, debug=False):
 
 def analyze_structure(seq, filename, ensemble=False, debug=False):
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     with open(filename + ".seq", "w") as fh:
         print(seq, file=fh)
@@ -640,14 +640,14 @@ def analyze_structure(seq, filename, ensemble=False, debug=False):
         exec_call = "./3rdParty/unafold/hybrid-ss-min -n RNA "
 
     # this line is necessary to omit output generated by UNAFOLD
-    with open(devnull, "w") as fnull:
-        call(exec_call + filename + ".seq",
+    with open(os.devnull, "w") as fnull:
+        subprocess.call(exec_call + filename + ".seq",
             shell=True,
             stdout=fnull,
             stderr=fnull)  # code is necessary to omit output generated by UNAFOLD
 
         if os.path.isfile(filename):
-            system("mv %s*.ct tmp/structures/" % filename)
+            os.system("mv %s*.ct tmp/structures/" % filename)
 
     if debug:
         for fn in glob.glob("%s*" % filename):
@@ -661,12 +661,12 @@ def analyze_structure(seq, filename, ensemble=False, debug=False):
 def analyze_structure_mfe(filename, region=None):
     data = {}
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     if region is None:
-        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
+        if os.path.exists(Data.project_dir + "/tmp/structures/" + filename + ".ct"):
 
-            output = check_output(
+            output = subprocess.check_output(
                 ["./3rdParty/unafold/ct-energy", "tmp/structures/" + filename + ".ct"]).rstrip()
             mfe_list = [float(a) for a in output.split('\n')]
 
@@ -682,20 +682,20 @@ def analyze_structure_mfe(filename, region=None):
 def analyze_structure_ds(filename, region=None):
     data = {}
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     if region is None:
-        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
-            output_ds = Popen(
+        if os.path.exists(Data.project_dir + "/tmp/structures/" + filename + ".ct"):
+            output_ds = subprocess.Popen(
                 "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
                 filename +
                 ".ct | awk /[[:digit:]][[:blank:]]0/'{print $1}'",
-                stdout=PIPE,
+                stdout=subprocess.PIPE,
                 shell=True).stdout.read()
-            data['StructureDoubleStrandedList'] = [
-                eval(k) for k in output_ds.split()]
-            data['StructureDoubleStranded'] = len(
-                data['StructureDoubleStrandedBasesList'])
+            data['StructureDoubleStrandedList'] = \
+                [eval(k) for k in output_ds.split()]
+            data['StructureDoubleStranded'] = \
+                len(data['StructureDoubleStrandedBasesList'])
         else:
             data['StructureDoubleStrandedList'] = 'NA'
             data['StructureDoubleStranded'] = 'NA'
@@ -708,20 +708,20 @@ def analyze_structure_ds(filename, region=None):
 def analyze_structure_ss(filename, region=None):
     data = {}
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     if region is None:
-        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
-            output_ss = Popen(
+        if os.path.exists(Data.project_dir + "/tmp/structures/" + filename + ".ct"):
+            output_ss = subprocess.Popen(
                 "perl 3rdParty/unafold/ss-count.pl tmp/structures/" +
                 filename +
                 ".ct | awk /[[:digit:]][[:blank:]]1/'{print $1}'",
-                stdout=PIPE,
+                stdout=subprocess.PIPE,
                 shell=True).stdout.read()
-            data['StructureSingleStrandedList'] = [
-                eval(k) for k in output_ss.split()]
-            data['StructureSingleStranded'] = len(
-                data['StructureSingleStrandedBasesList'])
+            data['StructureSingleStrandedList'] = \
+                [eval(k) for k in output_ss.split()]
+            data['StructureSingleStranded'] = \
+                len(data['StructureSingleStrandedBasesList'])
         else:
             data['StructureSingleStrandedList'] = 'NA'
             data['StructureSingleStranded'] = 'NA'
@@ -734,23 +734,23 @@ def analyze_structure_ss(filename, region=None):
 def analyze_structure_accessibility(filename, region=None):
     data = {}
 
-    chdir(project_dir)
+    os.chdir(Data.project_dir)
 
     if region is None:
-        if path.exists(project_dir + "/tmp/structures/" + filename + ".ct"):
-            #output = Popen("perl 3rdParty/unafold/ss-count.pl -w tmp/structures/" + filename + ".ct | awk '{sum +=  $2; count += 1}  END{print sum/count}'", stdout=PIPE, shell=True).stdout.read()
+        if os.path.exists(Data.project_dir + "/tmp/structures/" + filename + ".ct"):
+            #output = subprocess.Popen("perl 3rdParty/unafold/ss-count.pl -w tmp/structures/" + filename + ".ct | awk '{sum +=  $2; count += 1}  END{print sum/count}'", stdout=subprocess.PIPE, shell=True).stdout.read()
             #data['StructureAccessibility'] = eval(output)
-            output = Popen(
+            output = subprocess.Popen(
                 "perl 3rdParty/unafold/ss-count.pl -w tmp/structures/" +
                 filename +
                 ".ct | awk '{print $2}'",
-                stdout=PIPE,
+                stdout=subprocess.PIPE,
                 shell=True).stdout.read()
-            data['StructureEnsembleAccessibilityBasesList'] = [
-                eval(e) for e in output.split('\n') if e != '']
-            data['StructureEnsembleAccessibility'] = sum(
-                data['StructureEnsembleAccessibilityBasesList']) / len(
-                data['StructureEnsembleAccessibilityBasesList'])
+            data['StructureEnsembleAccessibilityBasesList'] = \
+                [eval(e) for e in output.split('\n') if e != '']
+            data['StructureEnsembleAccessibility'] = \
+                sum(data['StructureEnsembleAccessibilityBasesList']) / \
+                len(data['StructureEnsembleAccessibilityBasesList'])
         else:
             data['StructureEnsembleAccessibility'] = 'NA'
 
@@ -791,23 +791,15 @@ def SimpleStructureOperator(sequence, structurefile, structure_range, mutable_re
     if direction == '+':
         # get double stranded bases
         baseToMutate = [
-            (b +
-             structure_range[0] -
-             1) for b in ds_bases if (
-                b +
-                structure_range[0] -
-                1) in mutable_region]
+            (b + structure_range[0] - 1) for b in ds_bases if (
+                b + structure_range[0] - 1) in mutable_region]
     elif direction == '-':
         # get single stranded bases
         baseToMutate = [
-            (b +
-             structure_range[0] -
-             1) for b in ss_bases if (
-                b +
-                structure_range[0] -
-                1) in mutable_region]
+            (b + structure_range[0] - 1) for b in ss_bases if (
+                b + structure_range[0] - 1) in mutable_region]
     else:
-        sys.stderr.write("Direction Unknown")
+        print("Direction Unknown", file=sys.stderr)
 
     mutated = False
     iteration = 0
@@ -815,11 +807,11 @@ def SimpleStructureOperator(sequence, structurefile, structure_range, mutable_re
     while not mutated and iteration <= 100:
         # position to mutate
         index_to_mutate = baseToMutate.pop(
-            randint(
+            random.randint(
                 0,
                 len(baseToMutate) -
                 1)) if len(baseToMutate) != 0 else mutable_region.pop(
-            randint(
+            random.randint(
                 0,
                 len(mutable_region) -
                 1))
@@ -834,11 +826,11 @@ def SimpleStructureOperator(sequence, structurefile, structure_range, mutable_re
             p1 = (cds_region[0] + codon_p * 3)
             p2 = (cds_region[0] + codon_p * 3 + 1)
             p3 = (cds_region[0] + codon_p * 3 + 2)
-            alt_codons = ([c for c in aa2codon_table[codon2aa_table[
+            alt_codons = ([c for c in Data.aa2codon_table[Data.codon2aa_table[
                           initial_codon]] if c != initial_codon])
 
             while len(alt_codons) != 0:
-                rnd_alt_codon = alt_codons.pop(randint(0, len(alt_codons) - 1))
+                rnd_alt_codon = alt_codons.pop(random.randint(0, len(alt_codons) - 1))
 
                 valid = True
                 if initial_codon[0] != rnd_alt_codon[
@@ -899,7 +891,7 @@ def SimpleBneckOperator(seq, direction="", distance=0):
 
     while len(alt_codons) == 0 and iteration != 100:
         iteration += 1
-        codonPosition2replace = randint(0, len(tai) - 1)
+        codonPosition2replace = random.randint(0, len(tai) - 1)
         alt_codons = get_alternate_codons(
             tai[codonPosition2replace][0], dist=distance)
 
@@ -918,7 +910,7 @@ def SimpleBneckOperator(seq, direction="", distance=0):
                 1] > tai[codonPosition2replace][1]]
 
         if len(alt_codons) != 0:
-            randomAltCodon = randint(0, len(alt_codons) - 1)
+            randomAltCodon = random.randint(0, len(alt_codons) - 1)
             # print "Bot operator: old codon -> " + str(tai[codonPosition2replace][0])
             # print "Bot operator: new codon -> " +
             # str(alt_codons[randomAltCodon][0])
@@ -930,8 +922,9 @@ def SimpleBneckOperator(seq, direction="", distance=0):
         alt_codons[randomAltCodon][0] + seq[3 * (codonPosition2replace + 1):]
 
 
-def SimpleNtContentOperator(seq, direction=0, nucleotide=[
-], mutable_region=None, cds_region=(0, 9), keep_aa=True):
+def SimpleNtContentOperator(seq, direction=0, nucleotide=[],
+                            mutable_region=None, cds_region=(0, 9),
+                            keep_aa=True):
     if direction == 0:
         return seq
 
@@ -952,17 +945,17 @@ def SimpleNtContentOperator(seq, direction=0, nucleotide=[
     while not mutated and mutable_positions.__len__() != 0:
         # print mutable_positions
         rnd_pos = mutable_positions.pop(
-            randint(0, mutable_positions.__len__() - 1))
+            random.randint(0, mutable_positions.__len__() - 1))
 
         if direction == '-':
-            possible_mutations = list(set(bases) - set(nucleotide))
+            possible_mutations = list(set(Data.bases) - set(nucleotide))
         elif direction == '+':
             possible_mutations = list(nucleotide)
 
         while not mutated and possible_mutations.__len__() != 0:
 
             new_seq = seq[:rnd_pos] + possible_mutations.pop(
-                randint(0, possible_mutations.__len__() - 1)) + seq[rnd_pos + 1:]
+                random.randint(0, possible_mutations.__len__() - 1)) + seq[rnd_pos + 1:]
 
             if keep_aa == True and rnd_pos >= cds_region[
                     0] and rnd_pos <= cds_region[1]:
@@ -973,12 +966,12 @@ def SimpleNtContentOperator(seq, direction=0, nucleotide=[
                 final_codon = new_seq[
                     (cds_region[0] + codon_p * 3):(cds_region[0] + codon_p * 3 + 3)]
 
-                # print "initial codon: " + str(initial_codon) + " AA: " + codon2aa_table[initial_codon]
+                # print "initial codon: " + str(initial_codon) + " AA: " + Data.codon2aa_table[initial_codon]
                 # print "final codon: " + str(final_codon) + " AA: " +
-                # codon2aa_table[final_codon]
+                # Data.codon2aa_table[final_codon]
 
-                if codon2aa_table[
-                        initial_codon] == codon2aa_table[final_codon]:
+                if Data.codon2aa_table[
+                        initial_codon] == Data.codon2aa_table[final_codon]:
                     mutated = True
             else:
                 mutated = True
@@ -1007,9 +1000,9 @@ def SimplePWMScoreOperator(seq, pwmnt, direction=0,
         if iteration == max_iter:
             return None
         # draw position at random and check if better can be found
-        pos = choice(mutable_region)
+        pos = random.choice(mutable_region)
         current_value = pwmnt[new_seq[pos].replace('u', 't')][pos]
-        base = choice(bases)
+        base = random.choice(Data.bases)
         if base != seq[pos] \
                 and direction * (pwmnt[base.replace('u', 't')][pos] - current_value) > 0:
             # check whether the change goes in the right direction
@@ -1020,7 +1013,7 @@ def SimplePWMScoreOperator(seq, pwmnt, direction=0,
                 cod_offset = (pos) % 3
                 cod = seq[pos - cod_offset:(pos - cod_offset + 3)]
                 new_cod = new_seq[pos - cod_offset:(pos - cod_offset + 3)]
-                if codon2aa_table[cod] != codon2aa_table[new_cod]:
+                if Data.codon2aa_table[cod] != Data.codon2aa_table[new_cod]:
                     mutated = False
                     new_seq = seq
 
@@ -1041,13 +1034,13 @@ def randomMutationOperator(
                               set(range(cds_region[0], cds_region[1])))
 
     if mutableCodonsPosition == [] and mutableUTRPosition == []:
-        sys.stderr.write(
-            "randomMutationOperator: No codons available for mutation\n")
+        print("randomMutationOperator: No codons available for mutation",
+              file=sys.stderr)
         return None
     else:
         if keep_aa == True:
             if (mutableUTRPosition == []) or (
-                    mutableCodonsPosition != [] and choice([True, False])):
+                    mutableCodonsPosition != [] and random.choice([True, False])):
                 return mutateCDS(sequence, keep_aa,
                                  mutableCodonsPosition, cds_region, pos, n_mut)
             else:
@@ -1063,21 +1056,21 @@ def mutateCDS(sequence, keep_aa, mutableCodonsPosition,
     if keep_aa == True:
         result = analyzeCodons(sequence, mutableCodonsPosition)
 
-        n_mutations = choice(n_mut)
+        n_mutations = random.choice(n_mut)
 
         codons = (result[0])
         codons_ind = list(range(0, codons.__len__()))
 
         mutated = False
         while codons_ind.__len__() != 0 and n_mutations > 0:
-            rnd_ind = codons_ind.pop(randint(0, codons_ind.__len__() - 1))
+            rnd_ind = codons_ind.pop(random.randint(0, codons_ind.__len__() - 1))
             rnd_codon = codons[rnd_ind]
-            alt_codons = [c for c in aa2codon_table[codon2aa_table[
-                rnd_codon]] if c != rnd_codon and codon2aa_table[c] != 'stop']
+            alt_codons = [c for c in Data.aa2codon_table[Data.codon2aa_table[
+                rnd_codon]] if c != rnd_codon and Data.codon2aa_table[c] != 'stop']
             if alt_codons.__len__() != 0:
                 mutated = True
                 n_mutations -= 1
-                new_codon = choice(alt_codons)
+                new_codon = random.choice(alt_codons)
                 real_codon_pos = mutableCodonsPosition[rnd_ind]
                 codon_position = (real_codon_pos - cds_region[0]) / 3
                 all_codons = analyzeCodons(
@@ -1094,8 +1087,8 @@ def mutateCDS(sequence, keep_aa, mutableCodonsPosition,
                 sequence = new_seq
 
         if mutated == False:
-            sys.stderr.write(
-                "RandomMutator: Not able to mutate sequence keeping AA\n")
+            print("RandomMutator: Not able to mutate sequence keeping AA",
+                  file=sys.stderr)
             return None
         else:
             return new_seq
@@ -1107,7 +1100,7 @@ def mutateAll(sequence, keep_aa, mutable_region,
     #####
     # Not necessary to keep AA
     #
-    n_mutations = choice(n_mut)
+    n_mutations = random.choice(n_mut)
 
     if mutable_region == []:
         return None
@@ -1117,11 +1110,11 @@ def mutateAll(sequence, keep_aa, mutable_region,
         if pos is not None:
             intersect_mut = list(set(mutable_region) & set(pos))
             if intersect_mut != []:
-                position_to_mutate = choice(intersect_mut)
+                position_to_mutate = random.choice(intersect_mut)
             else:
-                position_to_mutate = choice(mutable_region)
+                position_to_mutate = random.choice(mutable_region)
         else:
-            position_to_mutate = choice(mutable_region)
+            position_to_mutate = random.choice(mutable_region)
         mutation = randomMutation(sequence[position_to_mutate])
 
         new_seq = sequence[:position_to_mutate] + \
@@ -1146,8 +1139,8 @@ def SimpleCAIOperator(sequence, cai_range, keep_aa,
         c, c + 1, c + 2]).issubset(mutable_region)]
 
     if len(mutableCodonsPosition) == 0:
-        sys.stderr.write(
-            "SimpleCAIOperator: No codons available for mutation\n")
+        print("SimpleCAIOperator: No codons available for mutation",
+              file=sys.stderr)
         return None
 
     result = analyzeCodons(sequence, mutableCodonsPosition)
@@ -1158,31 +1151,31 @@ def SimpleCAIOperator(sequence, cai_range, keep_aa,
 
     while not mutated and codons_ind.__len__() != 0:
 
-        rnd_ind = codons_ind.pop(randint(0, codons_ind.__len__() - 1))
+        rnd_ind = codons_ind.pop(random.randint(0, codons_ind.__len__() - 1))
         rnd_codon = codons[rnd_ind]
         rnd_codon_cai = codons_cai[rnd_ind]
 
         # select alternative codons
         if keep_aa == True and direction == '+':
-            alt_codons = [c for c in aa2codon_table[codon2aa_table[rnd_codon]] if c !=
-                          rnd_codon and cai_table[c] > rnd_codon_cai and codon2aa_table[c] != 'stop']
+            alt_codons = [c for c in Data.aa2codon_table[Data.codon2aa_table[rnd_codon]] if c !=
+                          rnd_codon and Data.cai_table[c] > rnd_codon_cai and Data.codon2aa_table[c] != 'stop']
         elif keep_aa == True and direction == '-':
-            alt_codons = [c for c in aa2codon_table[codon2aa_table[rnd_codon]] if c !=
-                          rnd_codon and cai_table[c] < rnd_codon_cai and codon2aa_table[c] != 'stop']
+            alt_codons = [c for c in Data.aa2codon_table[Data.codon2aa_table[rnd_codon]] if c !=
+                          rnd_codon and Data.cai_table[c] < rnd_codon_cai and Data.codon2aa_table[c] != 'stop']
         elif keep_aa == False and direction == '+':
-            alt_codons = list(k for k, v in cai_table.items(
-            ) if v > rnd_codon_cai and codon2aa_table[k] != 'stop')
+            alt_codons = list(k for k, v in Data.cai_table.items(
+            ) if v > rnd_codon_cai and Data.codon2aa_table[k] != 'stop')
         elif keep_aa == False and direction == '-':
-            alt_codons = list(k for k, v in cai_table.items(
-            ) if v < rnd_codon_cai and codon2aa_table[k] != 'stop')
+            alt_codons = list(k for k, v in Data.cai_table.items(
+            ) if v < rnd_codon_cai and Data.codon2aa_table[k] != 'stop')
 
         if alt_codons.__len__() != 0:
             mutated = True
-            new_codon = choice(alt_codons)
+            new_codon = random.choice(alt_codons)
             # print "new: " + str(new_codon)
 
     if mutated == False:
-        sys.stderr.write("SimpleCAIOperator: Not able to mutate sequence\n")
+        print("SimpleCAIOperator: Not able to mutate sequence", file=sys.stderr)
         return None
     else:
         # print "CAI operator: old_codon -> " + str(rnd_codon)
@@ -1191,16 +1184,11 @@ def SimpleCAIOperator(sequence, cai_range, keep_aa,
         codon_position = (real_codon_pos - cai_range[0]) / 3
         all_codons = analyzeCodons(
             sequence,
-            list(
-                range(
-                    cai_range[0],
-                    cai_range[1] +
-                    1,
-                    3)))[0]
+            list(range(cai_range[0], cai_range[1] + 1, 3)))[0]
         all_codons[codon_position] = new_codon
 
-        new_seq = sequence[:cai_range[
-            0]] + ''.join(c for c in all_codons) + sequence[cai_range[1] + 1:]
+        new_seq = sequence[:cai_range[0]] + \
+            ''.join(c for c in all_codons) + sequence[cai_range[1] + 1:]
         return new_seq
 
 
@@ -1236,34 +1224,34 @@ def SimpleHydropathyIndexOperator(
     result = analyzeCodons(
         sequence,
         mutableCodonsPosition,
-        data_table=hydropathy_index_table)
+        data_table=Data.hydropathy_index_table)
     codons = (result[0])
     codons_hi = (result[1])
     codons_ind = list(range(0, codons.__len__()))
 
     while not mutated and codons_ind.__len__() != 0:
 
-        rnd_ind = codons_ind.pop(randint(0, codons_ind.__len__() - 1))
+        rnd_ind = codons_ind.pop(random.randint(0, codons_ind.__len__() - 1))
         rnd_codon = codons[rnd_ind]
         rnd_codon_hi = codons_hi[rnd_ind]
 
         # select alternative codons
         if keep_aa == True and direction == '+':
-            alt_codons = [c for c in codons_list if c != rnd_codon and hydropathy_index_table[
-                c] > rnd_codon_hi and codon2aa_table[c] != 'stop' and hammingDistance(c, rnd_codon) == 1]
+            alt_codons = [c for c in Data.codons_list if c != rnd_codon and Data.hydropathy_index_table[
+                c] > rnd_codon_hi and Data.codon2aa_table[c] != 'stop' and hammingDistance(c, rnd_codon) == 1]
         elif keep_aa == True and direction == '-':
-            alt_codons = [c for c in codons_list if c != rnd_codon and hydropathy_index_table[
-                c] < rnd_codon_hi and codon2aa_table[c] != 'stop' and hammingDistance(c, rnd_codon) == 1]
+            alt_codons = [c for c in Data.codons_list if c != rnd_codon and Data.hydropathy_index_table[
+                c] < rnd_codon_hi and Data.codon2aa_table[c] != 'stop' and hammingDistance(c, rnd_codon) == 1]
         elif keep_aa == False and direction == '+':
-            alt_codons = list(k for k, v in cai_table.items(
-            ) if v > rnd_codon_hi and codon2aa_table[k] != 'stop')
+            alt_codons = list(k for k, v in Data.cai_table.items(
+            ) if v > rnd_codon_hi and Data.codon2aa_table[k] != 'stop')
         elif keep_aa == False and direction == '-':
-            alt_codons = list(k for k, v in cai_table.items(
-            ) if v < rnd_codon_hi and codon2aa_table[k] != 'stop')
+            alt_codons = list(k for k, v in Data.cai_table.items(
+            ) if v < rnd_codon_hi and Data.codon2aa_table[k] != 'stop')
 
         if alt_codons.__len__() != 0:
             mutated = True
-            new_codon = choice(alt_codons)
+            new_codon = random.choice(alt_codons)
             # print "new: " + str(new_codon)
 
     if mutated == False:
@@ -1306,7 +1294,7 @@ def look_for_RBS(seq):
             stop = max([0, i - 4])  # at least 3 nucleotides away
 
             aux_seq = seq[start:stop]
-            res = analyze_pwm_score(aux_seq, pwm_rbs)
+            res = analyze_pwm_score(aux_seq, Data.pwm_rbs)
             score = res['PWMScore']
             position = res['PWMScorePosition']
 
@@ -1328,19 +1316,19 @@ def look_for_RBS(seq):
 
 def look_for_promoters(seq):
     # look for putative promoters
-    res = analyze_pwm_score(seq, pwm_pro15)
+    res = analyze_pwm_score(seq, Data.pwm_pro15)
     score1 = res['PWMScore']
     position1 = res['PWMScorePosition']
-    res = analyze_pwm_score(seq, pwm_pro16)
+    res = analyze_pwm_score(seq, Data.pwm_pro16)
     score2 = res['PWMScore']
     position2 = res['PWMScorePosition']
-    res = analyze_pwm_score(seq, pwm_pro17)
+    res = analyze_pwm_score(seq, Data.pwm_pro17)
     score3 = res['PWMScore']
     position3 = res['PWMScorePosition']
-    res = analyze_pwm_score(seq, pwm_pro18)
+    res = analyze_pwm_score(seq, Data.pwm_pro18)
     score4 = res['PWMScore']
     position4 = res['PWMScorePosition']
-    res = analyze_pwm_score(seq, pwm_pro19)
+    res = analyze_pwm_score(seq, Data.pwm_pro19)
     score5 = res['PWMScore']
     position5 = res['PWMScorePosition']
 
@@ -1356,8 +1344,8 @@ def look_for_promoters(seq):
 def look_for_terminators(seq):
     # use transtermHP
     # create input files
-    file1 = 'test' + str(randint(0000, 1000)) + '.fa'
-    file2 = 'test' + str(randint(0000, 1000)) + '-fake.coords'
+    file1 = 'test' + str(random.randint(0000, 1000)) + '.fa'
+    file2 = 'test' + str(random.randint(0000, 1000)) + '-fake.coords'
 
     with open("tmp/transterm_files/" + file1, "w") as fh:
         print(">seq1", file=fh)
@@ -1368,13 +1356,13 @@ def look_for_terminators(seq):
         print("fakegene1    " + str(len(seq) - 1) + " " + str(len(seq)) + "    seq1", file=fh)
 
     # run transtermhp
-    output = Popen(
+    output = subprocess.Popen(
         "./3rdParty/transterm/transterm -p 3rdParty/transterm/expterm.dat tmp/transterm_files/" +
         file1 +
         " tmp/transterm_files/" +
         file2 +
         " 2> tmp/transterm_files/err.txt | awk /TERM/'{print $8}'",
-        stdout=PIPE,
+        stdout=subprocess.PIPE,
         stderr=None,
         shell=True).stdout.read()
 
@@ -1418,7 +1406,7 @@ def clean_cds(cds):
             to_drop.append(gene)
         else:
             for i in range(0, len(cds[0][gene]) - 3, 3):
-                if cds[0][gene][i:i + 3] in scod:
+                if cds[0][gene][i:i + 3] in Data.scod:
                     to_drop.append(gene)
                     break
     for gene in to_drop:
@@ -1463,7 +1451,7 @@ def regression_tai(cds, out_path="", win=21, length=90):
     return
 
 
-def bneck_tai(cds, out_path="", win=21, data=tai_tuller):
+def bneck_tai(cds, out_path="", win=21, data=Data.tai_tuller):
     bname = cds[1]
     cds = cds[0]
 
@@ -1475,7 +1463,7 @@ def bneck_tai(cds, out_path="", win=21, data=tai_tuller):
         for gene in cds:
             if len(cds[gene]) / 3 > win:
                 scores, smooths = analyze_tai(
-                    cds[gene][:-3], window=win, method="harmonic", data=tai_tuller)
+                    cds[gene][:-3], window=win, method="harmonic", data=Data.tai_tuller)
                 bneck = max(smooths)
                 pos = smooths.index(bneck)
                 gene_tai = sum([1 / v for v in scores]) / len(scores)
@@ -1509,7 +1497,7 @@ def construct_pssm(cds, length=90, out_path="", prob=None):
                 m[cds[gene][i]][i] += 1
 
     for k in m:
-        m[k] = [log((v / tot_gene) / prob[k]) for v in m[k]]
+        m[k] = [math.log((v / tot_gene) / prob[k]) for v in m[k]]
 
     if out_path:
         with open(out_path, "w") as h:
