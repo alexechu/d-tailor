@@ -1,8 +1,10 @@
-'''
+"""
 Created on Nov 16, 2011
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+
+"""
 
 import uuid
 
@@ -138,9 +140,9 @@ class StructureDoubleStranded(Structure):
                 self.label))
 
     def defineTarget(self, desiredSolution):
-        '''
+        """
         Function that determines if a target wasn't hit, and if not updates targetDirections
-        '''
+        """
         if desiredSolution is None:
             return True
 

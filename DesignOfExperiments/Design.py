@@ -1,16 +1,18 @@
-'''
+"""
 Created on Nov 11, 2012
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+
+"""
 
 import itertools
 
 class Design(object):
-    '''
+    """
     Abstract Class defining experimental design to be used
     featuresObj is a dictionary containing relevant info about design such as variables to use and thresholds for feature values
-    '''
+    """
 
     def __init__(self, featuresList, featuresObj):
         # validate if ids only have one character
@@ -28,9 +30,9 @@ class Design(object):
 
 
 class Optimization(Design):
-    '''
+    """
     Class encoding a single-target design (optimization)
-    '''
+    """
 
     def __init__(self, featuresList, featuresObj, target):
 
@@ -40,9 +42,9 @@ class Optimization(Design):
 
 
 class RandomSampling(Design):
-    '''
+    """
     Class encoding a random sampling design
-    '''
+    """
 
     def __init__(self, featuresList, featuresObj, sample_size=1000):
 
@@ -52,9 +54,9 @@ class RandomSampling(Design):
 
 
 class FullFactorial(Design):
-    '''
+    """
     Class encoding a multi factorial design
-    '''
+    """
 
     def __init__(self, featuresList, featuresObj):
 
@@ -69,9 +71,9 @@ class FullFactorial(Design):
 
 
 class CustomDesign(Design):
-    '''
+    """
     Class encoding a custom design (as many targets as you want)
-    '''
+    """
 
     def __init__(self, featuresList, featuresObj, targets=[]):
 

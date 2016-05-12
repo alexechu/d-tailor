@@ -1,8 +1,10 @@
-'''
+"""
 Created on Nov 1, 2012
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+
+"""
 
 import sys
 import csv

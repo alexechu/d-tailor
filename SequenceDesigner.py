@@ -1,23 +1,24 @@
-'''
+"""
 Created on Nov 1, 2012
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+
+"""
 
 import sys
+import time
+import random
+
 import DBOperation.DBSQLite
-
-from time import time
-from random import choice
-
 import Functions
 import Solution
 
 class SequenceDesigner(object):
 
-    '''
+    """
     Initializes class that design sequences based on a design method
-    '''
+    """
 
     def __init__(self, name, seed, design, dbfile, createDB=True):
 
@@ -35,28 +36,28 @@ class SequenceDesigner(object):
             seedSequence=seed)
 
     def configureSolution(self, solution):
-        '''
+        """
         Solution configuration
-        '''
+        """
         pass
 
     def validateSolution(self, solution):
-        '''
+        """
         Solution validation tests
-        '''
+        """
         pass
         solution.valid = True
 
     def additionalConfigurationPreMutation(self, solution):
-        '''
+        """
         This method is executed before the mutation iteration happens and can be used to set additional mutational properties
-        '''
+        """
         pass
 
     def additionalConfigurationPostMutation(self, solution):
-        '''
+        """
         This method is executed after the mutation iteration happens and can be used to set additional mutational properties
-        '''
+        """
         pass
 
     def calculateRelativeScore(self, feature="", level=1, featureScore=0):
@@ -96,10 +97,10 @@ class SequenceDesigner(object):
 
     def run(self, selection="natural"):
 
-        start_time = time()
+        start_time = time.time()
         sol_counter = 1
         last_counter = 1
-        last_timepoint = time()
+        last_timepoint = time.time()
 
         master = Solution.Solution(
             sol_id=self.dbconnection.seedId,
@@ -120,11 +121,11 @@ class SequenceDesigner(object):
         while not all_combinations_found and sol_counter <= self.max_sol_counter:
             iteration = 0
 
-            if time() - last_timepoint >= 60:  # Print statistics every 1 minute
+            if time.time() - last_timepoint >= 60:  # Print statistics every 1 minute
                 print("time elapsed: %.2f (s) \t solutions generated: %d \t rate (last min.): %0.2f sol/s  \t rate (overall): %0.2f sol/s" %
-                      ((time() - start_time), sol_counter, (sol_counter - last_counter) / (time() - last_timepoint), sol_counter / (time() - start_time)))
+                      ((time.time() - start_time), sol_counter, (sol_counter - last_counter) / (time.time() - last_timepoint), sol_counter / (time.time() - start_time)))
                 last_counter = sol_counter
-                last_timepoint = time()
+                last_timepoint = time.time()
 
             # Retrieve some desired solution (i.e. a particular combination of
             # features that was not yet found)
@@ -147,7 +148,7 @@ class SequenceDesigner(object):
             """
 
             # Choose stochastically  a close solution to the desired one
-            if choice([True, True, True, True, True, True, True, False]):
+            if random.choice([True, True, True, True, True, True, True, False]):
                 closestSolution = self.dbconnection.DBGetClosestSolution(
                     desired_solution)
             else:
@@ -196,7 +197,7 @@ class SequenceDesigner(object):
                 # generate next solution
                 # print "Generating new solution..."
                 if selection == "neutral":
-                    solution = choice([parent, solution])
+                    solution = random.choice([parent, solution])
                 elif selection == "directional":
                     # use current solution as parent for next round of
                     # mutations

@@ -1,8 +1,10 @@
-'''
+"""
 Created on Nov 1, 2011
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+
+"""
 
 import sys
 import uuid
@@ -11,7 +13,7 @@ import random
 import Functions
 
 class Solution:
-    '''
+    """
     A Solution encapsulates a sequence and their inherent attributes:
         sol_id - ID for Solution
         seqence - sequence for Solution
@@ -19,7 +21,7 @@ class Solution:
         mutable_region - a list with all positions that can be mutated
         parent - Solution from which the current Solution was derived
 
-    '''
+    """
 
     def __init__(self, sol_id=0, sequence="", cds_region=None,
                  keep_aa=False, mutable_region=None, parent=None, design=None):

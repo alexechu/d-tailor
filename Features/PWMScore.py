@@ -1,8 +1,10 @@
-'''
+"""
 Created on Nov 16, 2011
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+
+"""
 
 import uuid
 

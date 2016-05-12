@@ -1,22 +1,24 @@
-'''
+"""
 Created on Nov 1, 2012
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
 
-from sqlite3 import connect, Row
+"""
+
+import uuid
 import time
 import random
-import uuid
 import subprocess
 import socket
+import sqlite3
 
 import DBOperation.DBAbstract
 
 class DBSQLite(DBOperation.DBAbstract.DBAbstract):
-    '''
+    """
     Constructor
-    '''
+    """
 
     def __init__(self, dbfile, designMethod,
                  initialize=True, seedSequence=None):
@@ -32,8 +34,8 @@ class DBSQLite(DBOperation.DBAbstract.DBAbstract):
         self.gen_solutions_id = {}
 
         # Connect database
-        self.con = connect(self.dbfile + ".sqlite")
-        self.con.row_factory = Row
+        self.con = sqlite3.connect(self.dbfile + ".sqlite")
+        self.con.row_factory = sqlite3.Row
         self.con.isolation_level = None
         self.cur = self.con.cursor()
 
@@ -46,12 +48,12 @@ class DBSQLite(DBOperation.DBAbstract.DBAbstract):
         self.registerWorker()
 
     def DBInit(self):
-        '''
+        """
         Initialize database
         input: dbfile - file to save DB
         input: designMethod - a class Design with information about features name/type and design wanted
         returns: Nothing
-        '''
+        """
         pass
 
         # Design Dynamic tables
@@ -128,10 +130,10 @@ class DBSQLite(DBOperation.DBAbstract.DBAbstract):
         return 0
 
     def DBGetSolution(self, solution_id):
-        '''
+        """
         Get solution given solution_id
         returns: a dictionary with a solution with all attributes
-        '''
+        """
         pass
 
         self.cur.execute(
@@ -139,10 +141,10 @@ class DBSQLite(DBOperation.DBAbstract.DBAbstract):
         return dict(self.cur.fetchone())
 
     def DBGetDesiredSolution(self):
-        '''
+        """
         Get a desired solution that wasn't found yet
         returns: a dictionary with a desired solution or None
-        '''
+        """
         pass
 
         # Insert buffered solutions into DB
@@ -187,10 +189,10 @@ class DBSQLite(DBOperation.DBAbstract.DBAbstract):
              desired_solution_id))
 
     def DBGetClosestSolution(self, desiredSolution):
-        '''
+        """
         Get a solution that is closer to the desired solution
         returns: a dictionary with a solution with all attributes
-        '''
+        """
 
         if self.designMethod.listDesigns == [] or desiredSolution is None:
             # if there is no desiredSolution return a random solution
@@ -222,10 +224,10 @@ class DBSQLite(DBOperation.DBAbstract.DBAbstract):
         pass
 
     def DBCheckDesign(self, desired_solution_id):
-        '''
+        """
         Get the status of a solution to design
         returns: a boolean with the result of status == 'DONE'
-        '''
+        """
         pass
         self.cur.execute(
             "select * from desired_solution where des_solution_id=?",
@@ -234,10 +236,10 @@ class DBSQLite(DBOperation.DBAbstract.DBAbstract):
         return self.cur.fetchone()['status'] == "DONE"
 
     def DBInsertSolution(self, solution, desired_solution_id=""):
-        '''
+        """
         Insert solution into database
         returns: Nothing
-        '''
+        """
         pass
 
         if solution.solid in self.gen_solutions_id or solution.valid == False:
@@ -287,10 +289,10 @@ class DBSQLite(DBOperation.DBAbstract.DBAbstract):
         self.gen_solutions_sql.append(dict_with_values)
 
     def DBCloseConnection(self):
-        '''
+        """
         Closes connection to DB
         returns: Nothing
-        '''
+        """
         # Insert buffered solutions into DB
         self.flushSQL()
 

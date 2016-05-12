@@ -1,8 +1,10 @@
-'''
+"""
 Created on Nov 11, 2011
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+
+"""
 
 import sys
 import uuid
@@ -12,9 +14,9 @@ import Solution
 
 
 class Feature(object):
-    '''
+    """
     A master class for Solution Features to be manipulated
-    '''
+    """
 
     def __init__(self, featureObject=None, solution=None, label=""):
 
@@ -34,19 +36,19 @@ class Feature(object):
             self.level = featureObject.level
 
     def set_scores(self):
-        '''
+        """
         Call to the function calculating the score with proper parameters
         To be implemented in subclasses
-        '''
+        """
         pass
 
     def add_subfeature(self, feature):
         self.subfeatures[feature.label + feature.__class__.__name__] = feature
 
     def getTargets(self, desiredSolution):
-        '''
+        """
         given a desired solution, returns all the features that need to be modified
-        '''
+        """
         targets = []
         # evaluate if goal has achieved for base class
         if self.defineTarget(desiredSolution):
@@ -59,9 +61,9 @@ class Feature(object):
         return targets
 
     def defineTarget(self, desiredSolution):
-        '''
+        """
         Function that determines if a target wasn't hit and, if not, updates target instructions
-        '''
+        """
         if desiredSolution is None:
             return True
 
@@ -95,9 +97,9 @@ class Feature(object):
             return False
 
     def set_level(self):
-        '''
+        """
         define levels and update solution levels dictionary (only works for Numeric scores)
-        '''
+        """
 
         if self.solution.designMethod is not None:  # Design mode
             if self.label + self.__class__.__name__ in self.solution.designMethod.thresholds:
@@ -174,8 +176,8 @@ class Feature(object):
                                  design=self.solution.designMethod)
 
     def mutate(self, mutable_region=None):
-        '''
+        """
         Specify how to call operator to mutate the sequence
-        '''
+        """
         pass
         return self.randomMutation(mutable_region=mutable_region)

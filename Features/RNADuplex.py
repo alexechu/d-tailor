@@ -1,8 +1,10 @@
-'''
+"""
 Created on Jan 24, 2012
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+
+"""
 
 import Features.Feature
 import Functions

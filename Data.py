@@ -1,11 +1,14 @@
-'''
+"""
 Created on Oct 3, 2011
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+
+"""
+
 import os
 
-project_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
 
 bases = ['a', 't', 'g', 'c']
 

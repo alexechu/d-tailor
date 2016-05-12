@@ -1,8 +1,9 @@
-'''
+"""
 Created on Oct 3, 2011
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+"""
 
 import os
 import sys
@@ -156,10 +157,10 @@ def stddev(array):
 ######################
 
 def structureAnalysis(structure_file, propertyOfInterest="ss"):
-    '''
+    """
         given a structure file it returns the position that are either
         single stranded "ss" or double stranded "ds"
-    '''
+    """
     filepath = "tmp/structures/%s.ct" % structure_file
 
     if not os.path.exists(filepath):
@@ -186,9 +187,9 @@ def structureAnalysis(structure_file, propertyOfInterest="ss"):
 
 
 def analyzeCodons(seq, positions=None, data_table=Data.cai_table):
-    '''
+    """
        given a sequence it returns a list with two elements: [ list_of_codons, list_of_codons_cai]
-    '''
+    """
 
     if positions is None:
         positions = range(0, len(seq), 3)
@@ -732,7 +733,7 @@ def analyze_structure_accessibility(filename, region=None):
 
 def SimpleStructureOperator(sequence, structurefile, structure_range, mutable_region,
                             cds_region, direction, keep_aa=True, ss_bases=None, ds_bases=None):
-    '''
+    """
         Operator that given a sequence and structure, mutates the sequence to change structure
             seq: sequence in structure
             structure_file: a file containing the structure correspondent to sequence
@@ -740,7 +741,7 @@ def SimpleStructureOperator(sequence, structurefile, structure_range, mutable_re
             mutable_region - a list with all bases that can be mutated
             cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]
             direction: either increase ('+') or decrease ('-') single bases
-    '''
+    """
 
     if not mutable_region:  # it's not possible to mutate
         return None
@@ -983,12 +984,12 @@ def SimplePWMScoreOperator(seq, pwmnt, direction=0,
 
 def randomMutationOperator(
         sequence, keep_aa, mutable_region, cds_region, pos=None, n_mut=[1, 2]):
-    '''
+    """
         Operator that given a sequence, mutates the sequence randomly
             sequnce: sequence
             mutable_region - a list with all bases that can be mutated
             cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]
-    '''
+    """
     mutableCodonsPosition = [c for c in range(cds_region[0], cds_region[1], 3) if set([
         c, c + 1, c + 2]).issubset(mutable_region)]
     mutableUTRPosition = list(set(mutable_region) -
@@ -1087,14 +1088,14 @@ def mutateAll(sequence, keep_aa, mutable_region,
 
 def SimpleCAIOperator(sequence, cai_range, keep_aa,
                       mutable_region, cds_regions, direction='+'):
-    '''
+    """
         Operator that given a sequence, mutates the sequence to change CAI
             sequnce: sequence
             cai_range - start and end position to calculate cai - a tuple in the form (start, end)
             mutable_region - a list with all bases that can be mutated
             cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]
             direction: either increase ('+') or decrease ('-') CAI
-    '''
+    """
     mutated = False
     mutableCodonsPosition = \
        [c for c in range(cai_range[0], cai_range[1], 3) \
@@ -1166,14 +1167,14 @@ def hammingDistance(seq1, seq2):
 
 def SimpleHydropathyIndexOperator(
         sequence, hi_range, keep_aa, mutable_region, cds_regions, direction='+'):
-    '''
+    """
         Operator that given a sequence, mutates the sequence to change CAI
             sequnce: sequence
             cai_range - start and end position to calculate cai - a tuple in the form (start, end)
             mutable_region - a list with all bases that can be mutated
             cds_regions - a list of pairs with begin and end of CDSs - example: [(0,100), (150,300)]
             direction: either increase ('+') or decrease ('-') CAI
-    '''
+    """
     mutated = False
     mutableCodonsPosition = [c for c in range(hi_range[0], hi_range[1], 3) if set([
         c, c + 1, c + 2]).issubset(mutable_region)]
