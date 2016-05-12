@@ -6,6 +6,7 @@ Created on Dec 22, 2012
 
 """
 
+import os
 import sys
 
 import Bio.SeqIO
@@ -135,13 +136,16 @@ def test_TranslationFeaturesEcoliDesignerAllSeeds():
 
         design = DesignOfExperiments.Design.FullFactorial(
             ["sd16sRNADuplexMFE", "utrStructureMFE", "cdsCAI"], design_param)
-        #design = DesignOfExperiments.Design.RandomSampling(["sd16sRNADuplexMFE","utrStructureMFE","cdsCAI"],design_param, 3000)
-        #tfec_designer = TranslationFeaturesEcoliDesigner("tfec", seed, design, "/Users/jcg/Documents/workspace/D-Tailor/testFiles/outputFiles/tfec_ff_rnd_"+str(i), createDB=True)
+        # design = DesignOfExperiments.Design.RandomSampling(
+        #     ["sd16sRNADuplexMFE","utrStructureMFE","cdsCAI"], design_param, 3000)
+
+        os.mkdir("output/tfec_ff_neutral_s%d" % i)
+
         tfec_designer = TranslationFeaturesEcoliDesigner(
             "tfec",
             str(record.seq),
             design,
-            Data.project_dir + "/testFiles/outputFiles/tfec_ff_neutral_s" + str(i),
+            "output/tfec_ff_neutral_s%d" % i,
             createDB=True)
         tfec_designer.run(selection="directional")
 

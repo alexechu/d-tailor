@@ -7,6 +7,9 @@ tmp/
 # Don't keep object files under version control
 *.o
 
+# Test output files and database
+output
+
 # Byte-compiled / optimized / DLL files
 */__pycache__/*
 *.py[cod]

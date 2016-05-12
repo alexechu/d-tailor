@@ -6,6 +6,7 @@ Created on Dec 22, 2012
 
 """
 
+import os
 import sys
 
 import Bio.SeqIO
@@ -168,11 +169,13 @@ def test_TranslationFeaturesEcoliDesigner():
         #design = RandomSampling(["sd16sRNADuplexMFE","utrStructureMFE","cdsCAI"],design_param, 10)
         pass
 
+    os.mkdir("output/tfec_test")
+
     tfec_designer = TranslationFeaturesEcoliDesigner(
         "tfec",
         str(seed.seq),
         design,
-        Data.project_dir + "/testFiles/outputFiles/tfec_test",
+        "output/tfec_test",
         createDB=True)
     tfec_designer.run(selection="directional")
 
