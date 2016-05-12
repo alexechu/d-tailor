@@ -27,9 +27,7 @@ class Solution:
                  keep_aa=False, mutable_region=None, parent=None, design=None):
 
         if sequence is None:
-            sys.stderr.write("Tried to create a solution with sequence NULL\n")
-            self.sequence = None
-            return None
+            raise ValueError("Tried to create a solution without a sequence")
 
         # check if solution is in DB
         self.mutable_region = mutable_region
@@ -66,19 +64,19 @@ class Solution:
             return False
 
         same = True
-        for feature in list(self.designMethod.features.keys()):
+        for feature in self.designMethod.features.keys():
             key = feature + "Level"
-            same = same & (desiredSolution[key] == 0 or desiredSolution[
-                           key] == self.levels[key])
+            same = same & (desiredSolution[key] == 0 or
+                           desiredSolution[key] == self.levels[key])
 
         return same
 
     def mutate(self, desiredSolution=None, arg_random=False):
 
         if desiredSolution is None or \
-           arg_random or \
-           self.designMethod.listDesigns == [] or \
-           self.features == {}:
+                arg_random or \
+                self.designMethod.listDesigns == [] or \
+                self.features == {}:
             return self.randomMutation()
         else:
             # get features with targets

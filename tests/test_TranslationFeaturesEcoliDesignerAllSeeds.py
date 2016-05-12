@@ -139,7 +139,7 @@ def test_TranslationFeaturesEcoliDesignerAllSeeds():
         # design = DesignOfExperiments.Design.RandomSampling(
         #     ["sd16sRNADuplexMFE","utrStructureMFE","cdsCAI"], design_param, 3000)
 
-        os.mkdir("output/tfec_ff_neutral_s%d" % i)
+        os.makedirs("output/tfec_ff_neutral_s%d" % i, exist_ok=True)
 
         tfec_designer = TranslationFeaturesEcoliDesigner(
             "tfec",

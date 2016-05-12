@@ -169,7 +169,7 @@ def test_TranslationFeaturesEcoliDesigner():
         #design = RandomSampling(["sd16sRNADuplexMFE","utrStructureMFE","cdsCAI"],design_param, 10)
         pass
 
-    os.mkdir("output/tfec_test")
+    os.makedirs("output/tfec_test", exist_ok=True)
 
     tfec_designer = TranslationFeaturesEcoliDesigner(
         "tfec",

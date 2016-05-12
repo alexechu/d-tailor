@@ -27,8 +27,8 @@ class Bottleneck(Features.Feature.Feature):
 
     def __init__(self, bottleneckObject=None, solution=None, label="",
                  args={'bottleneck_range': (0, 59),
-                 'mutable_region': None,
-                 'keep_aa': True}):
+                       'mutable_region': None,
+                       'keep_aa': True}):
         if bottleneckObject is None:  # create new instance
             # General properties of feature
             Features.Feature.Feature.__init__(self, solution=solution, label=label)
@@ -36,12 +36,12 @@ class Bottleneck(Features.Feature.Feature):
             self.bottleneck_range = args['bottleneck_range']
             self.sequence = solution.sequence[
                 self.bottleneck_range[0]:self.bottleneck_range[1] + 1]
-            self.mutable_region = args[
-                'mutable_region'] if 'mutable_region' in args else solution.mutable_region
-            self.cds_region = args[
-                'cds_region'] if 'cds_region' in args else solution.cds_region
-            self.keep_aa = args[
-                'keep_aa'] if 'keep_aa' in args else solution.keep_aa
+            self.mutable_region = args['mutable_region'] \
+                if 'mutable_region' in args else solution.mutable_region
+            self.cds_region = args['cds_region'] \
+                if 'cds_region' in args else solution.cds_region
+            self.keep_aa = args['keep_aa'] \
+                if 'keep_aa' in args else solution.keep_aa
             self.set_scores()
             self.set_level()
             self.calculate_mutable_segments()
@@ -77,19 +77,9 @@ class Bottleneck(Features.Feature.Feature):
             real_stop = self.bottleneck_range[0] + (segment[1] - 1) * 3
 
             # check codons available for mutation
-            mutableCodonsPosition = [
-                c for c in range(
-                    real_start,
-                    real_stop +
-                    1,
-                    3) if set(
-                    [
-                        c,
-                        c +
-                        1,
-                        c +
-                        2]).issubset(
-                    self.mutable_region)]
+            mutableCodonsPosition = [c
+                for c in range(real_start, real_stop + 1, 3) \
+                    if set([c, c + 1, c + 2]).issubset(self.mutable_region)]
 
             self.segmentMutation[level] = mutableCodonsPosition
 
@@ -102,17 +92,17 @@ class Bottleneck(Features.Feature.Feature):
             self.targetInstructions["segment"]]
 
         if len(mutableCodonsPosition) == 0:
-            sys.stderr.write(
-                "Bottleneck: No codons available for mutation - " + str(self.__class__.__name__) + "\n")
+            print("Bottleneck: No codons available for mutation - %s" %
+                  self.__class__.__name__, file=sys.stderr)
             return None
 
         mut_codons = [self.solution.sequence[cod_init:cod_init + 3]
                       for cod_init in mutableCodonsPosition]
 
         subseq = "".join(mut_codons)
-        mutated = operator(
-            subseq, self.targetInstructions["direction"], distance=(
-                0 if self.keep_aa == True else 0))
+        mutated = operator(subseq,
+                           self.targetInstructions["direction"],
+                           distance=(0 if self.keep_aa == True else 0))
 
         if mutated is None or len(mutated) != len(subseq) or mutated == subseq:
             return None
@@ -147,21 +137,17 @@ class BottleneckPosition(Bottleneck):
         self.set_level()
 
     def set_scores(self, scoring_function=Functions.analyze_bottleneck_pos):
-        self.scores[
-            self.label +
-            "BottleneckPosition"] = scoring_function(
-            self.sequence,
-            self.bot_scores,
-            self.bot_smooth)
+        self.scores[self.label + "BottleneckPosition"] = \
+            scoring_function(self.sequence, self.bot_scores, self.bot_smooth)
 
     def defineTarget(self, desiredSolution):
         self.targetInstructions = {}
         target_level = desiredSolution[self.label + 'BottleneckPositionLevel']
-        if target_level != self.level:  # check if there is a level to achieve
 
-            levelsToMutate = [
-                level for level in list(
-                    self.segmentMutation.keys()) if self.segmentMutation[level] != []]
+        if target_level != self.level:  # check if there is a level to achieve
+            levelsToMutate = [level
+                for level in self.segmentMutation.keys() \
+                    if self.segmentMutation[level] != []]
             rndLevel = random.choice(levelsToMutate)
 
             if rndLevel == target_level:
@@ -172,8 +158,8 @@ class BottleneckPosition(Bottleneck):
                 self.targetInstructions['direction'] = '-'
 
             return True
-
-        return False
+        else:
+            return False
 
 
 class BottleneckRelativeStrength(Bottleneck):
@@ -187,14 +173,10 @@ class BottleneckRelativeStrength(Bottleneck):
         self.set_scores()
         self.set_level()
 
-    def set_scores(
-            self, scoring_function=Functions.analyze_bottleneck_rel_strength):
-        self.scores[
-            self.label +
-            "BottleneckRelativeStrength"] = scoring_function(
-            self.sequence,
-            self.bot_scores,
-            self.bot_smooth)
+    def set_scores(self,
+                   scoring_function=Functions.analyze_bottleneck_rel_strength):
+        self.scores[self.label + "BottleneckRelativeStrength"] = \
+            scoring_function(self.sequence, self.bot_scores, self.bot_smooth)
 
     def defineTarget(self, desiredSolution):
 
@@ -209,31 +191,37 @@ class BottleneckRelativeStrength(Bottleneck):
             self.label + 'BottleneckPosition'].level
         target_level_for_position = desiredSolution[
             self.label + 'BottleneckPositionLevel']
-        if target_level_for_strength != self.level and bneck_position_level == target_level_for_position:
 
-            other_segments = [segment for segment in list(self.segmentMutation.keys(
-            )) if self.segmentMutation[segment] != [] and segment != target_level_for_position]
+        if target_level_for_strength != self.level and \
+           bneck_position_level == target_level_for_position:
+
+            other_segments = [segment \
+                for segment in self.segmentMutation.keys())
+                    if self.segmentMutation[segment] != [] and
+                       segment != target_level_for_position]
 
             if target_level_for_strength - self.level > 0:
 
-                if len(other_segments) == 0 or random.choice(
-                        [True, False, False]):  # increase bottleneck strength in target segment
-                    self.targetInstructions[
-                        'segment'] = target_level_for_position
+                if len(other_segments) == 0 or \
+                   random.choice([True, False, False]):  # increase bottleneck strength in target segment
+                    self.targetInstructions['segment'] = \
+                        target_level_for_position
                     self.targetInstructions['direction'] = '+'  # increase
                 else:  # decrease bottleneck strength in segments other than target
-                    self.targetInstructions['segment'] = random.choice(other_segments)
+                    self.targetInstructions['segment'] = \
+                        random.choice(other_segments)
                     self.targetInstructions['direction'] = '-'  # decrease
             else:
-                if len(other_segments) == 0 or random.choice(
-                        [True, False, False]):  # decrease bottleneck strength in target segment
-                    self.targetInstructions[
-                        'segment'] = target_level_for_position
+                if len(other_segments) == 0 or \
+                    random.choice([True, False, False]):  # decrease bottleneck strength in target segment
+                    self.targetInstructions['segment'] = \
+                        target_level_for_position
                     self.targetInstructions['direction'] = '-'  # decrease
                 else:  # increase bottleneck strength in segments other than target
-                    self.targetInstructions['segment'] = random.choice(other_segments)
+                    self.targetInstructions['segment'] = \
+                        random.choice(other_segments)
                     self.targetInstructions['direction'] = '+'  # increase
 
             return True
-
-        return False
+        else:
+            return False

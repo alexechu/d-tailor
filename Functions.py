@@ -14,6 +14,7 @@ import tempfile
 import math
 import random
 
+import scipy.stats
 import pandas as pd
 
 import Data
@@ -112,6 +113,7 @@ def lin(x, y):
         real, real, real, real, real = lin(list, list)
     Returns coefficients to the regression line "y=ax+b" from x[] and y[],
             R^2 Value, sum of squares and mean error
+    # should just use scipy.stats.linregress
     """
     if len(x) != len(y):
         raise ValueError('unequal length')

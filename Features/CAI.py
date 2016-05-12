@@ -34,14 +34,14 @@ class CAI(Features.Feature.Feature):
             Features.Feature.Feature.__init__(self, solution=solution, label=label)
             # Specifics of this Feature
             self.cai_range = args['cai_range']
-            self.sequence = solution.sequence[
-                self.cai_range[0]:(self.cai_range[1] + 1)]
-            self.mutable_region = args[
-                'mutable_region'] if 'mutable_region' in args else solution.mutable_region
-            self.cds_region = args[
-                'cds_region'] if 'cds_region' in args else solution.cds_region
-            self.keep_aa = args[
-                'keep_aa'] if 'keep_aa' in args else solution.keep_aa
+            self.sequence = \
+                solution.sequence[self.cai_range[0]:(self.cai_range[1] + 1)]
+            self.mutable_region = args['mutable_region'] \
+                if 'mutable_region' in args else solution.mutable_region
+            self.cds_region = args['cds_region'] \
+                if 'cds_region' in args else solution.cds_region
+            self.keep_aa = args['keep_aa'] \
+                if 'keep_aa' in args else solution.keep_aa
             self.set_scores()
             self.set_level()
         else:  # copy instance
@@ -60,13 +60,12 @@ class CAI(Features.Feature.Feature):
     def mutate(self, operator=Functions.SimpleCAIOperator):
         if not self.targetInstructions:
             return None
-        new_seq = operator(
-            self.solution.sequence,
-            self.cai_range,
-            self.keep_aa,
-            self.mutable_region,
-            self.cds_region,
-            self.targetInstructions['direction'])
+        new_seq = operator(self.solution.sequence,
+                           self.cai_range,
+                           self.keep_aa,
+                           self.mutable_region,
+                           self.cds_region,
+                           self.targetInstructions['direction'])
         if not new_seq:
             return None
         return Solution.Solution(sol_id=str(uuid.uuid4().int),

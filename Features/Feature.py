@@ -89,8 +89,7 @@ class Feature(object):
                     elif level_info[0] - self.scores[self.label + self.__class__.__name__] < 0:
                         self.targetInstructions['direction'] = '-'  # decrease
                 else:
-                    self.targetInstructions[
-                        'direction'] = 'NA'  # not applicable
+                    self.targetInstructions['direction'] = 'NA' # not applicable
 
                 return True
 
