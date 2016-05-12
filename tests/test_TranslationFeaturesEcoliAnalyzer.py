@@ -1,8 +1,9 @@
-'''
+"""
 Created on Nov 1, 2012
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+"""
 
 from SequenceAnalyzer import SequenceAnalyzer
 from Features import CAI, Structure, RNADuplex
@@ -12,9 +13,9 @@ from Data import project_dir
 
 class TranslationFeaturesEcoliAnalyzer(SequenceAnalyzer):
 
-    '''
+    """
     Initializes class that analyzes sequence features
-    '''
+    """
 
     def __init__(self, input_file, input_type):
         SequenceAnalyzer.__init__(self, input_file, input_type)

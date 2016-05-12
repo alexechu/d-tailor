@@ -1,28 +1,34 @@
-'''
+"""
 Created on Dec 22, 2012
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
+
+"""
 
 import sys
 
-import Functions
-from SequenceDesigner import SequenceDesigner
-from Features.Structure import Structure, StructureMFE
-from Features import CAI, RNADuplex
-from DesignOfExperiments.Design import RandomSampling, Optimization, FullFactorial
+import Bio.SeqIO
+
 import Data
+import Functions
+import SequenceDesigner
+import Features
+import Features.CAI
+import Features.RNADuplex
+import Features.Structure
+import DesignOfExperiments.Design
 
-
-class TranslationFeaturesEcoliDesigner(SequenceDesigner):
+class TranslationFeaturesEcoliDesigner(SequenceDesigner.SequenceDesigner):
 
     def __init__(self, name, seed, design, dbfile, createDB=True):
-        SequenceDesigner.__init__(self, name, seed, design, dbfile, createDB)
+        SequenceDesigner.SequenceDesigner.__init__(
+            self, name, seed, design, dbfile, createDB)
 
     def configureSolution(self, solution):
-        '''
+        """
         Solution configuration
-        '''
+        """
 
         if solution.sequence is None:
             return 0
@@ -33,7 +39,7 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
         solution.cds_region = (49, len(solution.sequence))
         solution.keep_aa = True
 
-        cai_obj = CAI.CAI(
+        cai_obj = Features.CAI.CAI(
             solution=solution, label="cds", args={
                 'cai_range': (
                     49, len(
@@ -43,17 +49,17 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
                             solution.sequence)))})
 
         # Look for RBS
-        dup_obj1 = RNADuplex.RNADuplexRibosome(
+        dup_obj1 = Features.RNADuplex.RNADuplexRibosome(
             solution1=solution, label="sd16s", args={
                 'rnaMolecule1region': (
                     25, 48), 'mutable_region': list(
                     range(
                         25, 48))})
-        dup_mfe = RNADuplex.RNADuplexMFE(dup_obj1)
+        dup_mfe = Features.RNADuplex.RNADuplexMFE(dup_obj1)
         dup_obj1.add_subfeature(dup_mfe)
 
-        #MFE [-30,30]
-        st1_obj = Structure(
+        #MFE [-30, 30]
+        st1_obj = Features.Structure.Structure(
             solution=solution,
             label="utr",
             args={
@@ -64,7 +70,7 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
                     range(
                         49 - 30,
                         49 + 30))})
-        st_mfe = StructureMFE(st1_obj)
+        st_mfe = Features.Structure.StructureMFE(st1_obj)
         st1_obj.add_subfeature(st_mfe)
 
         solution.add_feature(cai_obj)
@@ -72,13 +78,12 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
         solution.add_feature(st1_obj)
 
     def validateSolution(self, solution):
-        '''
+        """
         Solution validation tests
-        '''
-        if solution.sequence is None or (
-                '?' in list(solution.levels.values())):
-            sys.stderr.write(
-                "SolutionValidator: Level unknown - " + str(solution.levels) + "\n")
+        """
+        if solution.sequence is None or '?' in solution.levels.values():
+            print("SolutionValidator: Level unknown - ", solution.levels,
+                  file=sys.stderr)
             solution.valid = False
             return 0
 
@@ -114,76 +119,58 @@ class TranslationFeaturesEcoliDesigner(SequenceDesigner):
 
 def test_TranslationFeaturesEcoliDesigner():
     # Seed sequence from which mutants will be derived
-    seed1 = 'aacattcttgttaagattatgtgatctttagcgcgggaggaaaatattgatgaaacagcctgcgcccgtttatcagagaattgcgggtcatcaatggcgacatatctggctttctggcgatatacacggttgtcttgagcagttgcgccgcaaattatggcattgtcgttttgatccgtggcgagatttacttatctcagtgggagacgttatcgatcgtgggccgcaaagtttacgttgtctgcagttactggaacaacattgggtttgtgcggtaagaggcaatcatgaacagatggcgatggatgcgctggcatcccagcagatgtctttgtggttgatgaatggcggcgactggtttattgcgctggcagataatcaacagaaacaagcgaaaacggcgctggaaaaatgtcagcatttgccctttattcttgaagtacacagtcgcaccggcaagcatgttattgctcatgccgattatccagatgatgtttatgaatggcaaaaggacgttgatttgcatcaggtcttgtggagccgctcgcgattaggtgaacgccaaaaagggcagggaattacaggtgctgatcatttctggtttggtcatacaccgttgcgacatcgcgtggatattggcaacctgcattatattgataccggtgctgtctttgggggcgaactgactcttgtgcaattgcaataa'
-#    seed2='ctgaaatatgaattttaacttttagtcattttataaagaggacattttcatgaatcgtattgaacattatcatgactggttacgtgacgcccacgcaatggaaaagcaagccgaatctatgcttgaatccatggccagccgtatagataattatcctgaactacgcgctcgtattgaacaacatcttagtgaaaccaaaaaccagattgttcaactggaaactattcttgatcgtaatgacatttcacgttcagtcattaaagattccatgagtaaaatggctgcgcttgggcagtcaatcggtggtatattcccttctgatgaaatagtcaaaggctctattagcggatatgtcttcgagcaatttgaaatcgcctgttacacctcactattagcagcagcaaaaaatgccggtgatacagcttcaattccaaccatcgaagcgattttaaatgaggaaaagcaaatggccgactggctgattcagaatattccgcaaacaactgagaaatttttaattcgctctgaaactgatggcgtagaagcgaagaaataa'
-#    seed3='cgctggtgatgggcttaagtatcctgctgctgaaaaaacaggagggatgatgcgccatttacgcaatatttttaatctgggtatcaaagagttgcgcagtctgctcggtgataaagcgatgctgacgctgattgtcttctcgtttacggtgtcggtgtattcgtcagcgaccgttacgccaggatcgttgaacctcgcgccgatcgccattgccgatatggatcaatcgcagttatcgaaccggatcgttaacagcttctatcgtccgtggtttttgccaccggagatgatcaccgccgatgagatggatgccggactggacgccggacgctataccttcgcgataaatattccgcctaattttcagcgtgatgtcctcgccggacgccagccggatattcaggtgaacgtcgatgccacgcgcatgagccaggcatttaccggcaatgggtatatccagaatattatcaacggtgaagtgaacagctttgtcgcgcgctaccgtgataacagcgaaccgttggtatcgctggaaacccggatgcgctttaacccgaacctcgatcccgcgtggtttggcggggtgatggcgatcatcaacaacattaccatgctggcgattgtattgaccggatcggcgctgatccgcgagcgtgaacacggcacggtggaacacttactggtgatgccgataacgccgtttgagatcatgatggcgaagatctggtcgatggggctggtggtgctggtggtatcgggattatcgctggtgctgatggtgaaaggtgtactgggcgtaccgattgaaggctcgatcccgctgtttatgctgggcgtggcgctcagtctgtttgccaccacgtcaatcggcatttttatggggacgatagcgcgttcaatgccgcaactggggctgctggtgattctggtgctgctgccgctgcaaatgctttccggtggttccacgccgcgcgaaagtatgccgcagatggtgcaggacattatgctgaccatgccgacgacacactttgttagcctcgcgcaggccatcctctaccggggtgccggattcgaaatcgtctggccgcagtttctgacgctgatggcaattggcggcgcatttttcaccattgcgctgctgcgattcaggaagacgattgggacaatggcgtaa'
-#    seed4='ttacaacgataaaaggctgtactttttctttagctcatggattaacacaatgaaattaatcactgcaccatgcagagcattacttgctctgccgttttgctacgccttttctgcggcaggagaagaagcacgtccggcagaacatgacgacacaaaaacacccgcaattacctcgacatcttctccttcatttcgtttttacggcgaattaggggttggtggatatatggatttagagggtgagaataaacataaatacagcgacggtacctatattgaaggtggcctggagatgaagtacggctcctggttcggcctgatttacggcgaaggctggaccgtgcaggccgaccacgacggcaatgcctgggtgccagaccatagctggggtggtttcgagggcggaattaaccgtttctatggcggttatcgtaccaatgatggcaccgaaatcatgctcagtctgcgtcaggattcctcgctggatgacctgcaatggtggggcgatttcacccccgatctgggctacgtcattcccaatacccgcgacattatgactgcgctgaaggtacagaacttaagcggcaactttcgttatagcgtcaccgcgactcctgccggacatcatgatgaaagcaaagcctggctacattttggcaaatacgatcgctatgacgacaaatacacctatccggcaatgatgaacggttacatccagtatgaccttgccgaaggcatcacctggatgaacggtctggaaatcaccgacggcacaggacagctctatctcacgggcctgctaactcctaactttgccgctcgcgcctggcaccataccggacgcgccgacgggctggacgtaccgggaagtgaaagtgggatgatggtgagcgccatgtatgaagcgttaaagggcgtttatctctccaccgcttacacctacgccaaacatcgccctgaccacgctgacgatgaaaccacctctttcatgcagtttggtatctggtacgaatacggcggcggacgtttcgccacggcttttgatagccgcttctacatgaaaaatgcctctcacgatcccagcgaccaaatcttcctgatgcaatatttctactggtaa'
-#    seed5='tgggtcgtcagcaaaagaaagataacgctgactcacggggagaataaccgtgaacagacgtaattttattaaagcagcctcctgcggggcattgctgacgggcgcgctgccgtctgtcagtcatgcggctgctgaaaaccgcccgccaattccgggatcgctggggatgttgtacgactcgaccttgtgcgtaggctgccaggcttgcgtcaccaagtgtcaggatatcaatttccctgaacgtaacccgcaaggggaacagacctggtcgaacaacgacaaactgtcgccgtataccaataacatcattcaggtgtggaccagcggcacaggggtcaacaaagaccaggaggagaacggctacgcgtacattaagaaacagtgtatgcactgcgtcgatccgaactgtgtctctgtgtgcccggtctctgcactgaaaaaagatccgaaaaccggcattgtccattacgacaaagatgtgtgcaccggctgccgttactgcatggtcgcctgtccgtacaacgtgccgaagtacgactacaacaacccgtttggtgcgctgcataagtgcgagctgtgcaaccagaaaggtgtggaacgtctcgataaaggcggtctacctggctgcgtagaagtgtgcccggcgggcgcggtgattttcggtacgcgtgaagagctgatggcggaggcgaaaaaacgtctggcgctgaagcctggcagcgaataccactatccgcgtcagacgctgaaatctggcgacacttacctgcatacggtgccgaaatattatccgcatctgtacggcgagaaagagggcggcggtactcaggttctggtactgacgggtgtgccttatgaaaatctcgacctgccgaaactggacgatctttctaccggtgcgcgttccgaaaatattcaacacaccctgtataaaggcatgatgctaccactggctgtgctggcgggcttaaccgtgctggttcgtcgcaacaccaaaaacgaccatcacgacggaggagacgatcatgagtcatga'
-#    seed6='ccagtagcactggctgctggggtgcgttttattcataaagcaaggctgtatgagcgagaaattaaagatagtctatcgcccattacaagaattgtcaccgtatgcgcacaacgccaggacgcacagtactgagcaggtggcacaactggtagaaagtattaagcaattcggctggactaatccggtgctgattgacgaaaagggcgaaattattgcgggtcacggtcgtgttatggcggctgaaatgctcaaaatggattctgttccggtcattgttctgtctggcctgacggatgagcagaagcagcgataa'
-#    seed7='gtataaacttgacgctttcaaaataaaaagaaaatcgaagcattcacacatgaataaaaaattaatgtatatattcgcaatttttatagttgcagcaattacctgtattagccaacccaagaaaacgacgttgcgtgataaagccatggtgaattatgcctttgattatttaagctcaccgggcagtcttccattcaccacggcagccacggagctttccgcgattcatggtcactcaacgtcgcaatatcgccttggagaattttatcttcatggtagcgacggtaaaccactggattatacacaggcgagatactggtatgagcaatcagcggaacaggaaaatccacgcgcgcaaagtaaactggggtggatctacctcaaaggtctgggggtcaaacccgacacccgtaaagcaattctctggtataaggaagcagctgaacaagggtatgctcatgctcaatatactttaggtttgatctacagaaatggctcaggtattaatgttaaccattatgaatctcaaaaatggttaaaactgaccgccaaacaacattacaaaaatgcggaaagattacttgccgggcttcccgcacattaa'
-#    seed8='tctcctttgttattactgtcgtgctttcacttctcgcaggagtcctcgtatggtaagcaacgcctccgcattaggacgcaatggcgtacatgatttcatcctcgttcgcgctaccgctatcgtcctgacgctctacatcatttatatggtcggttttttcgctaccagtggcgagctgacatatgaagtctggatcggtttcttcgcctctgcgttcaccaaagtgttcaccctgctggcgctgttttctatcttgatccatgcctggatcggcatgtggcaggtgttgaccgactacgttaaaccgctggctttgcgcctgatgctgcaactggtgattgtcgttgcactggtggtttacgtgatttatggattcgttgtggtgtggggtgtgtga'
-#    seed9='ggttgttgcagaatatgcaaggatgttgtttttcgttaacggagctgccatgaatctgcctgtaaaaatccgccgtgactggcactactatgcgttcgccattggccttatattcattcttaatggcgtggtggggttactgggatttgaagcaaaaggttggcagacctatgccgtcggtctggtgacgtgggtgattagtttctggctggcggggttgattattcgtcgtcgcgatgaagaaactgaaaacgcccaataa'
-#    seed10='caattagcaagacatctttttagaacacgctgaataaattgaggttgctatgtctattgtggtgaaaaataacattcattgggttggtcaacgtgactgggaagtgcgtgattttcacggcacggaatataaaacgctgcgcggcagcagctacaatagctacctcatccgcgaagaaaaaaacgtgctgatcgacaccgtcgaccataaattcagccgcgaatttgtgcagaacctgcgtaatgaaatcgatctggcggatatcgattacatcgtgattaaccatgcagaagaggaccacgctggggcgctgaccgaactgatggcacaaattcccgatacgccgatctactgtacagccaacgctatcgactcgataaatggtcatcaccatcatccggagtggaattttaatgtggtgaaaactggcgacacgctggatatcggcaacggcaaacagctcatttttgtcgaaacaccaatgctgcactggccggacagcatgatgacttacctgacaggcgacgcggtgctgttcagtaacgatgctttcggtcaacactactgcgacgagcatctgttcaacgatgaagtggatcagacggagcttttcgagcagtgccagcgttactacgccaatatcctgacgccgttcagccgcctggtaacaccgaaaattaccgagatcctgggctttaacttaccagtcgatatgatagccacttcccacggcgtggtatggcgcgataacccgacgcaaattgtcgagctgtacctgaaatgggcggctgattatcaggaagacagaatcaccattttctacgacaccatgtcgaataacacccgcatgatggctgacgctatcgcccaggggattgcggaaaccgacccacgcgtggcggtgaaaattttcaacgtcgcccgaagcgataaaaacgaaatcctgactaatgtcttccgctcaaaaggcgtgctggtcggcacttcgacgatgaataacgtgatgatgccgaaaatcgccgggctggtggaggagatgactggtttacgcttccgtaacaaacgcgccagtgctttcggctctcacggctggagcggcggtgcggtggatcgtctttccacgcgcctgcaggatgcgggtttcgaaatgtcgcttagcctgaaagcgaaatggcgaccagaccaggacgctctgaagttatgccgtgaacacggtcgcgaaatcgcccgtcagtgggcgctcgcgccgctgccgcagagcacggtgaatacggtagttaaagaagaaacctctgccaccacgacggctgacctcggcccacggatgcagtgcagcgtctgccagtggatttacgatccggcaaaaggcgagccaatgcaggacgttgcgccaggaacgccgtggagtgaagtcccggataacttcctctgcccggaatgctccctcggcaaagacgtctttgaagaactggcatcggaggcaaaatga'
-#    seed11='gaatcaggctgttaatcataaataagaccacgggccacggaggctatcaatgttgagtatttttaaaccagcgccacacaaagcgcgcttacctgccgcggagatcgatccgacttatcgtcgattgcgctggcaaattttcctggggatattctttggctatgcggcttactatttggttcgtaagaactttgcgcttgctatgccttatctggttgagcagggattctcacgcggtgatttaggttttgccctttcggggatctcgattgcttatggattttcgaaattcatcatgggttcggtatcggatcgctcgaatccgcgcgttttcctgcccgcaggtttgattctggcggcggcagtgatgttgtttatgggctttgtgccatgggcgacgtcgagcattgcggtgatgtttgtactgttgttcctctgcggttggttccaggggatggggtggccgccgtgtggtcgtactatggtgcactggtggtcgcagaaagaacgtggcggcattgtgtcagtgtggaactgtgcgcacaacgtcggtggtggtattccgccgctgctgttcctgctggggatggcctggttcaatgactggcatgcggcgctctatatgcctgctttctgcgccattctggtggcattattcgcctttgcgatgatgcgcgataccccgcaatcctgtggcttgccgccgatcgaagagtacaaaaatgattatccggacgactataacgaaaaagcggaacaggagctgacggcgaagcaaatcttcatgcagtacgtactgccgaacaaactgctgtggtatatcgccatcgccaacgtgttcgtttatctgctgcgttacggcatcctcgactggtcaccgacttatctgaaagaggttaagcatttcgcgctagataaatcctcctgggcctacttcctttatgaatatgcaggtattccgggcactctgctgtgcggctggatgtcggataaagtcttccgtggcaaccgtggggcaaccggcgttttctttatgacactggtgaccatcgcgactatcgtttactggatgaacccggcaggtaacccaaccgtcgatatgatttgtatgattgttatcggcttcctgatctacggtcctgtgatgctgatcggtctgcatgcgctggaactggcaccgaaaaaagcggcaggtacggcagcgggctttaccgggctgtttggttacctgggcggttcggtggcggcgagcgcgattgttggctacaccgtggacttcttcggctgggatggcggctttatggtaatgattggcggcagcattctggcggttatcttgttgattgttgtgatgattggcgaaaaacgtcgccatgaacaattactgcaagaacgcaacggaggctaa'
-#    seed12='acaattcaagaatagccgcaaaatgttgtcattacaacaaggcggctatatgacgctcgcgcagtttgccatgattttctggcacgacctggcagcaccgatcctggcgggaattattaccgcagcgattgtcagctggtggcgtaaccggaagtaa'
-#    seed13='atttataaagattaagtaaacacgcaaacacaacaataacggagccgtgatggctggaaacacaattggacaactctttcgcgtaaccaccttcggcgaatcgcacgggctggcgctcggctgcatcgtcgatggtgttccgccaggcattccgctgacggaagcggacctgcaacatgacctcgaccgtcgtcgccctgggacatcgcgctataccacccagcgccgcgagccggatcaggtcaaaattctctccggtgtttttgaaggcgttactaccggcaccagcattggcttgttgatcgaaaacactgaccagcgctctcaggattacagtgcgattaaggacgttttccgtccaggccatgccgattacacctacgaacaaaaatacggtctgcgcgattatcgcggcggtggacgttcttccgcccgcgaaaccgccatgcgcgtggcggcaggagctattgccaaaaaatatctcgccgagaaatttggtattgaaatccgtggctgcctgacccagatgggcgacattccgctggatatcaaagactggtcgcaggtcgagcaaaatccgtttttttgcccggaccccgacaaaatcgacgcgttagacgagttgatgcgtgcgctgaaaaaagagggcgactccatcggcgctaaagtcaccgttgttgccagtggcgttcctgccggacttggcgagccggtctttgaccgcctggatgctgacatcgcccatgcgctgatgagcatcaacgcggtgaaaggcgtggaaattggcgacggctttgacgtggtggcgctgcgcggcagccagaaccgcgatgaaatcaccaaagacggtttccagagcaaccatgcgggcggcattctcggcggtatcagcagcgggcagcaaatcattgcccatatggcgctgaaaccgacctccagcattaccgtgccgggtcgtaccattaaccgctttggcgaagaagttgagatgatcaccaaaggccgtcacgatccctgtgtcgggatccgcgcagtgccgatcgcagaagcgatgctggcgatcgttttaatggatcacctgttacggcaacgggcgcaaaatgccgatgtgaagactgatattccacgctggtaa'
-#    seed14='taaaaacagcgcggtgtattgtgacgtttttatatctaccgtgaatgttatgaacactatcgtatttgtggaagatgatgcggaagtcggttcactgattgccgcgtacctggcaaaacatgatatgcaggttaccgtagagccgcgcggcgaccaggccgaagaaaccattttgcgagaaaatccggatttggtgttactcgacatcatgctaccaggcaaggacggcatgaccatttgtcgtgatttacgcgcaaagtggtctggaccgattgttcttctaacctctctcgatagcgatatgaaccacatcctggcactggaaatgggtgcctgcgactatattctcaaaacgacgccccctgctgttttgctagcgcgtttacgtttgcatttgcgtcagaatgagcaagccacactgaccaaaggtcttcaggaaacgtctctgactccctacaaagccctgcatttcggcacgttgaccatcgatcccatcaaccgcgtagtcaccctggctaacactgaaatctcgctctcgacagctgatttcgaattattgtgggaattagctacccatgccgggcaaatcatggaccgcgatgcattgctgaaaaatttacgcggcgtcagttatgacggactggatcgtagcgtggacgtggctatttcgcggttaagaaaaaaactgctcgataacgccgcagaaccttatcgcattaaaactgtgcgtaacaaaggctatctttttgcgcctcatgcatgggaataa'
-#    seed15='cgtcgcactcgatgcttagcaagcgataaacacattgtaaggataacttatgaacaagactcaactgattgatgtaattgcagagaaagcagaactgtccaaaacccaggctaaagctgctctggagtccactctggctgcaattactgagtctctgaaagaaggcgatgctgtacaactggttggtttcggtaccttcaaagtgaaccaccgcgctgagcgtactggccgcaacccgcagaccggtaaagaaatcaaaattgccgcagctaacgtaccggcatttgtttctggcaaggcactgaaagacgcagttaagtaa'
-#    seed16='gccgaataatcgtcgttggcgaattttacgactctgacaggaggtggcaatgctggttgccgcaggacagtttgctgttacatctgtgtgggaaaagaacgctgagatttgtgcctcgttgatggcgcaggcggcggaaaacgacgcatcgctgtttgccctgccggaagcattgctggcgcgcgatgatcatgatgcagatctatcggttaaatcagcacagctgctggaaggcgaattcctcggactttacggcgagaaagtaaacgtaacatgatgacgacaattctgacgattcatgttccttcaacgccggggcgcgcatggaatatgctggtggcacttcaggcaggaaacatcgtcgcccgttatgccaaactgcatctctatgatgcatttgccattcaggaatcacgccgtgttgatgctggtaatgaaatcgctccgttactggaggtggaagggatgaaggtcggtctgatgacctgttatgacttacgctttccagagctggcgctggcacaggcattacagggagctgaaatcctggtacttcctgccgcctgggttcgcgggccgctcaaagagcatcactggtcaacgttgcttgccgctcgtgcgctggataccacctgttatatggtggcggcgggggagtgcgggaacaaaaatatcggtcaaagccggattatagatccctttggcgtcaccattgcggcagcgtcagaaatgcctgcactcattatggcggaagtgacgcccgaacgtgtgcgtcaggtgcgcgcgcaactgcccgtcttaaacaaccgtcgctttgcgccgccgcaattattatga'
-#    seed17='aacgactgcccatgtcgatttagaaatagttttttgaaaggaaagcagcatgaaaattaaaactctggcaatcgttgttctgtcggctctgtccctcagttctacagcggctctggccgctgccacgacggttaatggtgggaccgttcactttaaaggggaagttgttaacgccgcttgcgcagttgatgcaggctctgttgatcaaaccgttcagttaggacaggttcgtaccgcatcgctggcacaggaaggagcaaccagttctgctgtcggttttaacattcagctgaatgattgcgataccaatgttgcatctaaagccgctgttgcctttttaggtacggcgattgatgcgggtcataccaacgttctggctctgcagagttcagctgcgggtagcgcaacaaacgttggtgtgcagatcctggacagaacgggtgctgcgctgacgctggatggtgcgacatttagttcagaaacaaccctgaataacggaaccaataccattccgttccaggcgcgttattttgcaaccggggccgcaaccccgggtgctgctaatgcggatgcgaccttcaaggttcagtatcaataa'
-#    seed18='ttttgcagggatgttgtcgtccctgaaaaagcaaaaatggagaaaaggaatgagtgaatcattacatctgacccgcaatggatcaattctggaaattacccttgatcgtccaaaagcgaatgctattgatgcaaaaaccagctttgaaatgggcgaagtatttctaaatttccgtgacgatccgcaattacgtgtcgccattattaccggtgccggagagaagttcttttccgcgggctgggatttaaaagcggcagcagaaggcgaagcaccggatgctgactttggtccgggtggttttgcgggattaaccgaaattttcaatctcgacaaaccggttatcgcagctgtgaacggctatgcctttggcggcggctttgaactggcgctggcggcagattttattgtttgtgccgataacgccagcttcgccctgccggaagccaaactgggcatcgttcctgacagcggcggtgtgctgcgtctgccgaagatcctgccgcctgccatcgtcaatgaaatggtgatgaccggcagacgaatgggcgcagaagaggcgctgcgttgggggatagtcaaccgcgtggttagccaggcggaactgatggataacgcccgcgaactggctcagcagctggttaacagcgccccgctggcgattgcggcgctgaaagagatctaccgcaccaccagcgaaatgccggtagaagaagcgtatcgctatattcgcagcggcgtgttgaaacactatccatcggttctgcattcggaagatgccattgaagggccgctggcgtttgccgagaagcgcgatccggtgtggaaaggacgttaa'
-#    seed19='caaccagtaaactacgcgccagttatgtacacactcaggacaaaaaaacgtgacgattaaattgattgtcggcctggcgaaccccggtgctgaatacgccgcaacgcgacataatgctggtgcctggttcgttgacttactggcagagcgtttgcgcgctccgctgcgcgaagaggctaaattctttggttatacttcgcgagtcactcttggaggcgaagatgtccgcctgttagtcccgactacatttatgaatctcagcggcaaagccgttgcggcgatggccagttttttccgcattaatccggacgaaattctggtggcccacgacgaactggatctgcctcctggcgtcgccaaatttaaattgggcggtggccatggtggtcacaatggactgaaagacatcatcagtaaattgggtaataaccctaactttcaccgtttacgcatcggaatcggtcatccgggcgataaaaataaagttgtcggttttgtgttaggcaaaccgcctgttagtgaacagaagttaattgatgaagccattgacgaagcggcgcgttgtactgaaatgtggtttacagatggcttgaccaaagcaacgaaccgattgcacgcctttaaagcgcaataa'
-#    seed20='atcacaaatgttttttgattgtgaagttttgcacggacggggaagatgaatgaaaaagattgcatttggctgtgatcatgtcggtttcattttaaaacatgaaatagtggcacatttagttgagcgtggcgttgaagtgattgataaaggaacctggtcgtcagagcgtactgattatccacattacgccagtcaagtcgcactggctgttgctggcggagaggttgatggcgggattttgatttgtggtactggcgtcggtatttcgatagcggcgaacaagtttgccggaattcgcgcggtcgtctgtagcgaaccttattccgcgcaactttcgcggcagcataacgacaccaacgtgctggcttttggttcacgagtggttggcctcgaactggcaaaaatgattgtggatgcgtggctgggcgcacagtacgaaggcggtcgtcatcaacaacgcgtggaggcgattacggcaatagagcagcggagaaattga'
-#    seed21='gccccggcacaggctgcccaggccgttgcgactctataaggacacgataatgacgatttttgataattatgaagtgtggtttgtcattggcagccagcatctgtatggcccggaaaccctgcgtcaggtcacccaacatgccgagcacgtcgttaatgcgctgaatacggaagcgaaactgccctgcaaactggtgttgaaaccgctgggcaccacgccggatgaaatcaccgctatttgccgcgacgcgaattacgacgatcgttgcgctggtctggtggtgtggctgcacaccttctccccggccaaaatgtggatcaacggcctgaccatgctcaacaaaccgttgctgcaattccacacccagttcaacgcggcgctgccgtgggacagtatcgatatggactttatgaacctgaaccagactgcacatggcggtcgcgagttcggcttcattggcgcgcgtatgcgtcagcaacatgccgtggttaccggtcactggcaggataaacaagcccatgagcgtatcggctcctggatgcgtcaggcggtctctaaacaggatacccgtcatctgaaagtctgccgatttggcgataacatgcgtgaagtggcggtcaccgatggcgataaagttgccgcacagatcaagttcggtttctccgtcaatacctgggcggttggcgatctggtgcaggtggtgaactccatcagcgacggcgatgttaacgcgctggtcgatgagtacgaaagctgctacaccatgacgcctgccacacaaatccacggcaaaaaacgacagaacgtgctggaagcggcgcgtattgagctggggatgaagcgtttcctggaacaaggtggcttccacgcgttcaccaccacctttgaagatttgcacggtctgaaacagcttcctggtctggccgtacagcgtctgatgcagcagggttacggctttgcgggcgaaggcgactggaaaactgccgccctgcttcgcatcatgaaggtgatgtcaaccggtctgcagggcggcacctcctttatggaggactacacctatcacttcgagaaaggtaatgacctggtgctcggctcccatatgctggaagtctgcccgtcgatcgccgcagaagagaaaccgatcctcgacgttcagcatctcggtattggtggtaaggacgatcctgcccgcctgatcttcaatacccaaaccggcccagcgattgtcgccagcttgattgatctcggcgatcgttaccgtctactggttaactgcatcgacacggtgaaaacaccgcactccctgccgaaactgccggtggcgaatgcgctgtggaaagcgcaaccggatctgccaactgcttccgaagcgtggatcctcgctggtggcgcgcaccataccgtcttcagccatgcactgaacctcaacgatatgcgccaattcgccgagatgcacgacattgaaatcacggtgattgataacgacacacgcctgccagcgtttaaagacgcgctgcgctggaacgaagtgtattacgggtttcgtcgctaa'
-#    seed22='catgatattcatcaggaaaacgccatctatttgatggtgaggagactgcgtgactgacgttttactctgtgttggcaatagcatgatgggcgatgatggcgcaggtccgctgctggcggaaaagtgcgccgccgcgccgaaaggtaactgggtggtgattgacggcggtagcgcaccggaaaacgacatcgtcgctatccgtgaactgcgcccgacacgactgctgattgtcgacgccacggatatggggctaaaccccggcgagatccgcatcatcgacccggatgatatcgccgagatgtttatgatgactacccataacatgccgttgaattaccttatcgaccagttgaaagaagatattggcgaagtgattttcctcggcattcagccggatatcgtcggcttttactacccgatgacccagccgattaaagatgcggtagaaaccgtttatcaacgactggaaggctgggaaggaaatggcggcttcgcgcagttagcggtggaagaagagtag'
-#    seed23='ccgacgatgattacggcctcaggcgacaggcacaaatcggagagaaactatgtttgaaccaatggaacttaccaatgacgcggtgattaaagtcatcggcgtcggcggcggcggcggtaatgctgttgaacacatggtgcgcgagcgcattgaaggtgttgaattcttcgcggtaaataccgatgcacaagcgctgcgtaaaacagcggttggacagacgattcaaatcggtagcggtatcaccaaaggactgggcgctggcgctaatccagaagttggccgcaatgcggctgatgaggatcgcgatgcattgcgtgcggcgctggaaggtgcagacatggtctttattgctgcgggtatgggtggtggtaccggtacaggtgcagcaccagtcgtcgctgaagtggcaaaagatttgggtatcctgaccgttgctgtcgtcactaagcctttcaactttgaaggcaagaagcgtatggcattcgcggagcaggggatcactgaactgtccaagcatgtggactctctgatcactatcccgaacgacaaactgctgaaagttctgggccgcggtatctccctgctggatgcgtttggcgcagcgaacgatgtactgaaaggcgctgtgcaaggtatcgctgaactgattactcgtccgggtttgatgaacgtggactttgcagacgtacgcaccgtaatgtctgagatgggctacgcaatgatgggttctggcgtggcgagcggtgaagaccgtgcggaagaagctgctgaaatggctatctcttctccgctgctggaagatatcgacctgtctggcgcgcgcggcgtgctggttaacatcacggcgggcttcgacctgcgtctggatgagttcgaaacggtaggtaacaccatccgtgcatttgcttccgacaacgcgactgtggttatcggtacttctcttgacccggatatgaatgacgagctgcgcgtaaccgttgttgcgacaggtatcggcatggacaaacgtcctgaaatcactctggtgaccaataagcaggttcagcagccagtgatggatcgctaccagcagcatgggatggctccgctgacccaggagcagaagccggttgctaaagtcgtgaatgacaatgcgccgcaaactgcgaaagagccggattatctggatatcccagcattcctgcgtaagcaagctgattaa'
-#    seed24='cgggggtgggggtataatgaccattctgttattgcatagagtagttaacatgaagcggagtagaacggaagtggggcgctggcgcatgcagcgtcaggctagccgacgtaaatcgcgttggcttgaggggcaatcgcgccgaaatatgcgtatccacagcatcaggaagtgcattctaaacaaacagcgtaactcgttattgtttgcgatctacaatatctaa'
-#    seed25='gatgagttatgtagactggccgccattaattttgaggcacacgtactacatggctgaattcgaaaccacttttgcagatctgggcctgaaggctcctatccttgaagcccttaacgatctgggttacgaaaaaccatctccaattcaggcagagtgtattccacatctgctgaatggccgcgacgttctgggtatggcccagacggggagcggaaaaactgcagcattctctttacctctgttgcagaatcttgatcctgagctgaaagcaccacagattctggtgctggcaccgacccgcgaactggcggtacaggttgctgaagcaatgacggatttctctaaacacatgcgcggcgtaaatgtggttgctctgtacggcggccagcgttatgacgtgcaattacgcgccctgcgtcaggggccgcagatcgttgtcggtactccgggccgtctgctggaccacctgaaacgtggcactctggacctctctaaactgagcggtctggttctggatgaagctgacgaaatgctgcgcatgggcttcatcgaagacgttgaaaccattatggcgcagatcccggaaggtcatcagaccgctctgttctctgcaaccatgccggaagcgattcgtcgcattacccgccgctttatgaaagagccgcaggaagtgcgcattcagtccagcgtgactacccgtcctgacatcagccagagctactggactgtctggggtatgcgcaaaaacgaagcactggtacgtttcctggaagcggaagattttgatgcggcgattatcttcgttcgtaccaaaaacgcgactctggaagtggctgaagctcttgagcgtaacggctacaacagcgccgcgctgaacggtgacatgaaccaggcgctgcgtgaacagacactggaacgcctgaaagatggtcgtctggacatcctgattgcgaccgacgttgcagcccgtggcctggacgttgagcgtatcagcctggtagttaactacgatatcccgatggattctgagtcttacgttcaccgtatcggtcgtaccggtcgtgcgggtcgtgctggccgcgcgctgctgttcgttgagaaccgcgagcgtcgtctgctgcgcaacattgaacgtactatgaagctgactattccggaagtagaactgccgaacgcagaactgctaggcaaacgccgtctggaaaaattcgccgctaaagtacagcagcagctggaaagcagcgatctggatcaataccgcgcactgctgagcaaaattcagccgactgctgaaggtgaagagctggatctcgaaactctggctgcggcactgctgaaaatggcacagggtgaacgtactctgatcgtaccgccagatgcgccgatgcgtccgaaacgtgaattccgtgaccgtgatgaccgtggtccgcgcgatcgtaacgaccgtggcccgcgtggtgaccgtgaagatcgtccgcgtcgtgaacgtcgtgatgttggcgatatgcagctgtaccgcattgaagtgggccgcgatgatggtgttgaagttcgtcatatcgttggtgcgattgctaacgaaggcgacatcagcagccgttacattggtaacatcaagctgtttgcttctcactccaccatcgaactgccgaaaggtatgccgggtgaagtgctgcaacactttacgcgcactcgcattctcaacaagccgatgaacatgcagttactgggcgatgcacagccgcatactggcggtgagcgtcgtggcggtggtcgtggtttcggtggcgaacgtcgtgaaggcggtcgtaacttcagcggtgaacgccgtgaaggtggccgtggtgatggtcgtcgttttagcggcgaacgtcgtgaaggccgcgctccgcgtcgtgatgattctaccggtcgtcgtcgtttcggtggtgatgcgtaa'
-#    seed26='ccggggctatgcttatagcgataatcatactgatgagagagggaaggtcatggatcaggcgctactggacgggggttatcgctgttataccggcgaaaagatcgatgtctatttcaacactgcgatatgtcagcattctggcaattgcgtacgtggcaacggcaagttatttaatctcaaacgaaagccgtggatcatgccggatgaagtcgacgtcgccactgtggttaaagtgattgatacgtgcccgagcggcgcgctgaaataccgtcataaataa'
-#    seed27='ctggcgagggtttccagatatcatgagttctgattacgcaggagaactcatgatctggataatgctcgccacgctggcggtagtgtttgtggttggttttcgggtgctgacatccggggccagaaaagcgattcgccgtctcagcgatcggctgaacatcgatgtcgtacccgtggagtcgatggtcgatcaaatgggaaagtcagctggtgacgaatttttacgttatttgcatcgtccggatgagtcgcacctgcaaaacgccgcgcaggtgttgctcatctggcaaattgtcattgtcgatggtagcgaacagaacctgctgcaatggcatcggattttacaaaaagctcgcctcgccgcgccgattaccgacgctcaggtcaggctggcgctaggttttctgcgcgaaaccgaacctgaaatgcaggatattaatgcttttcagatgcgctataacgcgttctttcagcctgccgagggcgttcactggttgcattga'
-#    seed28='ctgcattatttctggcgtcgaatagctattccttaagcaggagcttgtcatggaattcttaatggacccctcaatttgggcggggctactcacgcttgttgttctcgaaattgtgctgggtatcgataacctggtcttcatcgccattcttgctgacaaactgccgccaaaacaacgcgataaagcgcgtttgctggggttatcactggcgctgattatgcgtctggggctgctgtcgctgatttcatggatggtcacgctgaccaaaccgctatttaccgtcatggatttctccttctccggacgcgacctgattatgttgttcggggggatattcttgctgttcaaagcaacaaccgaactgcatgaacggctggaaaaccgcgatcatgattccggccacggtaaaggctacgccagtttctgggtggtcgtcacacagattgtcatccttgacgccgtcttctcgttggatgcggtaattactgcagtagggatggttaaccatctgccggtgatgatggcggcggtagtgattgcgatggcggttatgttgctggcatccaaaccgctgacgcgattcgttaaccagcaccccacggtggtggtgctctgtctgagcttcctgttaatgattggtctgagtctggtggcagaaggtttcggtttccacattccgaaaggttacctgtatgccgcgattggcttctcgatcatcatcgaagtgtttaaccagattgcgcgtcgcaactttattcgccaccagtcgactttgccgctgcgagcgcgtactgccgatgccatcctgcgtttgatgggcgggaaacgtcaggccaatgttcagcacgatgccgataacccgatgccgatgccgatcccggaaggtgcatttgccgaagaagaacgttacatgattaacggcgtactgacgctggcgtcgcgttctctgcgcgggatcatgacgccgcgcggtgaaataagctgggttgacgctaatctcggggtcgatgaaatccgcgagcaactgctctcttcaccgcacagtctgttcccggtatgtcgcggtgaactggatgaaatcatcggtattgtacgtgctaaagaactgctggtggcgctggaagagggcgttgatgtggcggcgattgcttcggcgtctccggcgattatcgtcccggaaaccctcgatccgatcaacctgttgggcgtgctgcgtcgtgctcgcgggagctttgttatcgtgaccaacgagtttggtgtggtacaaggtctggtcacgccgctggatgtgctggaagccattgcgggtgaattcccggacgctgacgaaacgccggaaatcattactgatggtgacggctggctggtaaaaggcggtacagatttgcatgccttgcagcaggcgcttgatgttgagcaccttgccgatgacgatgatatcgcgacggtcgcgggcctcgtgatctcggcaaatggtcacattccccgtgtgggcgatgtgattgatgtagggccactgcatatcaccatcattgaagccaatgattatcgtgttgatctggttcgcattgttaaagagcaaccggcgcacgatgaagatgagtaa'
-#    seed29='ctaacgcatgctagtttaatgacataaggtaggtgaaacggagattggagtgaaaaagtttcgatgggtcgttctggttgtcgtggtgttggcttgcttgctgctttgggcgcaggtattcaacatgatgtgcgatcaggatgtacaatttttcagcggaatttgtgccattaaccagtttatcccgtggtga'
-#    seed30='ataaaagttatctcccttctcgttcatcgttccatatttgagaaacagtatgtcttccagagttttgaccccggacgtcgttggtattgacgccctggtacacgatcaccaaaccgttctggcaaaagctgaaggcggtgtggttgccgtatttgctaacaatgccccggcgttttatgccgtcacgcctgcacgcctggctgaactgctggcgctggaagaaaagctggcgcgtccgggaagcgatgtcgctctggacgatcaactctatcaggaaccgcaagccgctcccgttgctgtacccatggggaaattcgccatgtatccggactggcaacccgatgccgattttatccgcctggcggcgctatggggcgtggcgctaagagagccggtgaccaccgaagaactggcctcattcattgcctactggcaggcggaaggtaaagtctttcaccatgtgcagtggcaacaaaaactggcgcgcagcctgcaaatcggtcgtgccagcaacggcggactgccgaaacgagatgtgaatacggtcagcgaacctgacagccaaattccaccaggattcagagggtaa'
+    seed = next(Bio.SeqIO.parse(open("tests/seeds.fna", "rU"), "fasta"))
 
     # Design Methodology and thresholds
     design_param = {"sd16sRNADuplexMFE": {'type': 'REAL',
-                                          'thresholds': {'1': (-12.7, -7.3), '2': (-7.3, -5.8), '3': (-5.8, -5.2), '4': (-5.2, -3.3), '5': (-3.3, 2.0)}},
+                                          'thresholds': {'1': (-12.7, -7.3),
+                                                         '2': (-7.3, -5.8),
+                                                         '3': (-5.8, -5.2),
+                                                         '4': (-5.2, -3.3),
+                                                         '5': (-3.3, 2.0)}},
                     "utrStructureMFE": {'type': 'REAL',
-                                        'thresholds': {'1': (-29.2, -12.2), '2': (-12.2, -9.95), '3': (-9.95, -8.4), '4': (-8.4, -6.73), '5': (-6.73, 0.65)}},
+                                        'thresholds': {'1': (-29.2, -12.2),
+                                                       '2': (-12.2, -9.95),
+                                                       '3': (-9.95, -8.4),
+                                                       '4': (-8.4, -6.73),
+                                                       '5': (-6.73, 0.65)}},
                     "cdsCAI": {'type': 'REAL',
-                               'thresholds': {'1': (0.13, 0.29), '2': (0.29, 0.33), '3': (0.33, 0.37), '4': (0.37, 0.42), '5': (0.42, 0.86)}}
-
+                               'thresholds': {'1': (0.13, 0.29),
+                                              '2': (0.29, 0.33),
+                                              '3': (0.33, 0.37),
+                                              '4': (0.37, 0.42),
+                                              '5': (0.42, 0.86)}}
                     }
 
     if len(sys.argv) >= 2:
         if sys.argv[1] == "optimization":
-            design = Optimization(
+            design = DesignOfExperiments.Design.Optimization(
                 ["sd16sRNADuplexMFE", "utrStructureMFE", "cdsCAI"], design_param, sys.argv[2])
         elif sys.argv[1] == "fullfactorial":
-            design = FullFactorial(
+            design = DesignOfExperiments.Design.FullFactorial(
                 ["sd16sRNADuplexMFE", "utrStructureMFE", "cdsCAI"], design_param)
         elif sys.argv[1] == "randomsampling":
-            design = RandomSampling(
+            design = DesignOfExperiments.Design.RandomSampling(
                 ["sd16sRNADuplexMFE", "utrStructureMFE", "cdsCAI"], design_param, int(sys.argv[2]))
         elif sys.argv[1] == "-h":
-            print("Please use one of the following options: ")
-            print("TranslationFeaturesEcoliDesigner.py optimization [target]")
-            print("TranslationFeaturesEcoliDesigner.py fullfactorial")
-            print(
-                "TranslationFeaturesEcoliDesigner.py randomsampling [sample size]")
+            print("Please use one of the following options: ",
+                "TranslationFeaturesEcoliDesigner.py optimization [target]",
+                "TranslationFeaturesEcoliDesigner.py fullfactorial",
+                "TranslationFeaturesEcoliDesigner.py randomsampling [sample size]",
+                end="\n")
             sys.exit("")
         else:
             sys.exit("For help use TranslationFeaturesEcoliDesigner.py -h\n")
     else:
         #design = Optimization(["sd16sRNADuplexMFE","utrStructureMFE","cdsCAI"],design_param, '1.4.3')
-        design = FullFactorial(
+        design = DesignOfExperiments.Design.FullFactorial(
             ["sd16sRNADuplexMFE", "utrStructureMFE", "cdsCAI"], design_param)
         #design = RandomSampling(["sd16sRNADuplexMFE","utrStructureMFE","cdsCAI"],design_param, 10)
         pass
 
     tfec_designer = TranslationFeaturesEcoliDesigner(
         "tfec",
-        seed1,
+        str(seed.seq),
         design,
         Data.project_dir + "/testFiles/outputFiles/tfec_test",
         createDB=True)
