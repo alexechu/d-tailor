@@ -1,7 +1,8 @@
-'''
+"""
 Created on Apr 9, 2012
 
 @author: cambray
+@author: Shyam Saladi (saladi@caltech.edu)
 
 This script uses a monte carlo simulation to compute a set of sequences (with exactly one element for each combination) having minimal pair-wise distance between all of them.
 
@@ -12,14 +13,16 @@ OUTPUT:
     - FASTA file with final set of sequences selected
     - CSV file containing the nucleotide distance matrix between all final sequences
 
-'''
+"""
+
+import os
+import sys
 
 import pickle
 import csv
-from random import randint, choice
-from math import sqrt
-from os import path
-import sys
+
+import math
+import random
 
 code = {'ata': 'i', 'atc': 'i', 'att': 'i', 'atg': 'm',
         'aca': 't', 'acc': 't', 'acg': 't', 'act': 't',
@@ -79,12 +82,12 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False,
         if len(ids) < len(in_ids):
             for id_comb in in_ids:
                 if not id_comb in ids:
-                    current_set[id_comb] = randint(1, idnbr[id_comb])
+                    current_set[id_comb] = random.randint(1, idnbr[id_comb])
     else:
         current_set = {}
         for combi in idnbr:
             # choose one sequence per combination
-            jackpot = randint(1, idnbr[combi])
+            jackpot = random.randint(1, idnbr[combi])
             current_set[combi] = jackpot
     # init distance
     distnt = {}
@@ -150,20 +153,20 @@ def monte_carlo_min_dist(in_seq, pkl_path, pkl_import=False,
         # choose a new sequence
         # equal probability to all solutions, irrespective of id_comb
         if random_flag < 0:
-            combi, jackpot = fullidsol.pop(randint(0, len(fullidsol) - 1))
+            combi, jackpot = fullidsol.pop(random.randint(0, len(fullidsol) - 1))
             if not len(fullidsol):
                 random_flag = 0
                 currenttry = 0
                 print("start random")
             # print combi, jackpot
         elif random_flag > 0:
-            combi, jackpot = choice(allfullids)
+            combi, jackpot = random.choice(allfullids)
             while jackpot == current_set[combi]:
-                combi, jackpot = choice(allfullids)
+                combi, jackpot = random.choice(allfullids)
         else:
-            combi, jackpot = choice(allfullids)
+            combi, jackpot = random.choice(allfullids)
             while jackpot == current_set[combi]:
-                combi, jackpot = choice(allfullids)
+                combi, jackpot = random.choice(allfullids)
             print("start random")
             currenttry = 0
         # update status
@@ -322,7 +325,7 @@ def get_final_set_feats(seq_in, pkl, seq_out, get_distance=True, verbose=True):
                 hnt.write("\n")
     if get_distance:
         average_nt = sum(alldistnt) / total
-        sd_nt = sqrt(
+        sd_nt = math.sqrt(
             sum([(dist - average_nt)**2 for dist in alldistnt]) / (total - 1))
         hnt.write(
             "average distance: %.2f nt +/- %.2f (sd)" %
@@ -345,7 +348,7 @@ def dist_wrapper(path_seq, pkl_import=False):
 
     path_seq = path_seq.replace('.csv', '')
 
-    if pkl_import and path.exists(path_seq + ".pkl0"):
+    if pkl_import and os.path.exists(path_seq + ".pkl0"):
         pkl_import = "%s.pkl0" % (path_seq)
     else:
         pkl_import = False

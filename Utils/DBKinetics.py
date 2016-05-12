@@ -1,8 +1,8 @@
-'''
+"""
 Created on Apr 4, 2012
 
 @author: jcg
-'''
+"""
 
 from os import path
 from sqlite3 import connect, Row

@@ -1,11 +1,13 @@
-'''
+"""
 Created on Jan 30, 2012
 
 @author: jcg
-'''
+@author: Shyam Saladi (saladi@caltech.edu)
 
+"""
+
+import os
 import math
-from os import path
 
 
 def pfm2pwm(pfmFile=""):
@@ -14,7 +16,7 @@ def pfm2pwm(pfmFile=""):
     """
     pwm = {}
 
-    project_dir = path.dirname(__file__)
+    project_dir = os.path.dirname(__file__)
 
     f = open(project_dir + "/" + pfmFile, 'r')
     keys = f.readline().split()
