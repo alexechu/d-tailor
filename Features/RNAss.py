@@ -9,3 +9,6 @@ class RNAss(Feature):
 
     def configureSolution():
         pass
+
+    def changeSolution(new_solution):
+        self.solution = new_solution
